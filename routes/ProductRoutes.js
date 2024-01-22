@@ -4,7 +4,7 @@ const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 
 const multer = require("multer");
-const { addProduct, getAllProducts, getSpecificProduct, updateProduct, deleteProduct, getProductsByCategoryId,getAllProductsForTable, addVarProduct, getVarProductById, getAllVarProducts, getProductsByTag, getProductsBysubCategoryId, getProductsBysubSubCategoryId } = require("../controllers/productController");
+const { addProduct, getAllProducts, getSpecificProduct,getProductsByPriceRange, updateProduct, deleteProduct, getProductsByCategoryId,getAllProductsForTable, addVarProduct, getVarProductById, getAllVarProducts, getProductsByTag, getProductsBysubCategoryId, getProductsBysubSubCategoryId, getAllProductsForPriceAPI } = require("../controllers/productController");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -31,6 +31,7 @@ const upload = multer({ storage: storage, fileFilter: imageFileFilter });
 
 router.post("/addproduct", upload.array("imageGallery", 10), addProduct);
 router.post("/getallproducts", getAllProducts);
+router.post("/getallproductsforprice", getProductsByPriceRange);
 router.post("/get-products-for-table", getAllProductsForTable);
 router.post("/addvar", upload.array("imageGallery", 10), addVarProduct);
 router.post("/getvarproduct/:id", getVarProductById);

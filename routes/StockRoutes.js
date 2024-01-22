@@ -10,7 +10,7 @@ router.use(cookieParser());
 router.post("/getstocks", getAllStock);
 router.post("/createstock", createStock);
 router.post("/getspecificstock/:id", getStockById);
-router.post("/updatestock/:id", updateStockById);
+router.put("/updatestock/:id", updateStockById);
 router.post("/deletestocks/:id", deleteStockById);
 router.post("/getstocksbycategory/:id", getStockByCategory);
 router.post("/getstocksbyweighttype/:id", getStockByPriceUpdate);

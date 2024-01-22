@@ -361,6 +361,74 @@ const getAllProducts = async (req, res) => {
   }
 };
 
+const getProductsByPriceRange = async (req, res, next) => {
+  try {
+    let priceQuery;
+
+    // Extract the range parameter from the request
+    const priceRange = req.query.priceRange;
+
+    // Define price queries based on the provided range
+    switch (priceRange) {
+      case "0-1000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 0, $lte: 1000 } };
+        break;
+      case "1000-5000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
+        break;
+      case "5000-10000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000, $lte: 10000 } };
+        break;
+      case "10000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 10000 } };
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: "Invalid price range",
+        });
+    }
+
+    // Fetch products based on the price range
+    const products = await Product.find(priceQuery).select({
+      name: 1,
+      prices: 1,
+      stock: 1,
+      size: 1,
+      color: 1,
+      material: 1,
+      season: 1,
+      gst: 1,
+      sku: 1,
+      calculationOnWeight: 1,
+      weightType: 1,
+      weight: 1,
+      laborCost: 1,
+      discountOnLaborCost: 1,
+      isActive: 1,
+      createdAt: 1,
+      filters: 1,
+      isVariant: 1,
+      mainProductId: 1,
+      productColor: 1,
+      productSize: 1,
+      OtherVariations: 1,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Products retrieved successfully for the price range ${priceRange}`,
+      products,
+    });
+  } catch (error) {
+    console.error("Error fetching products by price range:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
+};;
+
 // Get Specific Product
 const getSpecificProduct = async (req, res) => {
   const productId = req.params.id;
@@ -606,6 +674,7 @@ module.exports = {
   getAllProducts,
   getSpecificProduct,
   updateProduct,
+  getProductsByPriceRange,
   deleteProduct,
   addProduct,
   getProductsByCategoryId,
