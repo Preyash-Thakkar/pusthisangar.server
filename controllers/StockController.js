@@ -89,34 +89,38 @@ exports.updateStockById = async (req, res, next) => {
     const stock = await Stock.findById(stockId);
 
     if (!stock) {
-      return res.send({
+      return res.status(404).send({
         success: false,
         error: "Stock entry not found",
       });
     }
 
     const updateData = {
-      ProductId: req.body.ProductId || stock.ProductId,
+     // ProductId: req.body.ProductId || stock.ProductId,
       quantity: req.body.quantity || stock.quantity,
-      currentPricePerUnit:
-        req.body.currentPricePerUnit || stock.currentPricePerUnit,
-      date: req.body.date || stock.date,
+      currentPricePerUnit:req.body.currentPricePerUnit || stock.currentPricePerUnit,
+      //date: req.body.date || stock.date,
     };
 
     await Stock.findByIdAndUpdate(stockId, updateData);
+
     const updatedStock = await Stock.findById(stockId);
-    return res.send({
+
+    return res.status(200).send({
       success: true,
+      error: null,
       message: "Stock entry updated successfully",
       stock: updatedStock,
     });
   } catch (error) {
-    return res.send({
+    console.error("Error updating stock:", error);
+    return res.status(500).send({
       success: false,
       error: "Internal Server Error",
     });
   }
 };
+
 
 // Delete stock entry by ID
 exports.deleteStockById = async (req, res, next) => {

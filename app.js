@@ -28,19 +28,14 @@ const SeasonRoutes = require("./routes/SeasonRoutes");
 const Gst = require("./routes/gstRoutes");
 const DailyRatesRoutes = require("./routes/PricetypeRoutes");
 const BannerRoutes = require("./routes/BannerRoutes");
-const BlogRoutes = require("./routes/blogRouts")
-const DashboardRoutes = require("./routes/dashboardRouts")
+const BlogRoutes = require("./routes/blogRouts");
+const DashboardRoutes = require("./routes/dashboardRouts");
 const ColorRoutes = require("./routes/ColorRoutes");
 const SizeRoutes = require("./routes/SizeRoutes");
 const BlogCatRoutes = require("./routes/BlogCategoryRoutes");
 const SubscribeRoutes = require("./routes/SubscribeRoutes");
 const contactRoutes = require("./routes/ContactRoutes");
 const paymentGatewayRoutes = require("./routes/PaymentGateway");
-
-
-
-
-
 
 // const menuRoutes = require("./routes/menuRoutes");
 
@@ -63,7 +58,6 @@ app.use(
   })
 );
 
-
 // ----------------------------------Define a custom morgan format ----------------------------------------
 morgan.token("color-status", (req, res) => {
   const status = res.statusCode;
@@ -82,7 +76,6 @@ morgan.token("color-status", (req, res) => {
 
 const customFormat = ":method :url :color-status :response-time ms";
 
-
 app.use(morgan(customFormat));
 // ----------------------------------Define a custom morgan format ----------------------------------------
 
@@ -98,7 +91,7 @@ app.use("/color", express.static("./uploads/Color"));
 // Routes Middleware
 
 app.use("/api", userRoute);
-app.use("/api", roleRoutes);
+// app.use("/api", roleRoutes);
 app.use("/category", productCatRoutes);
 app.use("/subcategory", productSubCatRoutes);
 app.use("/subsubcategory", productSubSubCatRoutes);
@@ -111,22 +104,19 @@ app.use("/orders", orderRoutes);
 app.use("/stocks", StocksRoutes);
 app.use("/coupons", CouponRoutes);
 app.use("/gst", Gst);
-app.use("/dailyrates" , DailyRatesRoutes);
-app.use("/material" , MaterialRoutes);
+app.use("/dailyrates", DailyRatesRoutes);
+app.use("/material", MaterialRoutes);
 // app.use("/color" , ColorRoutes);
-app.use("/season" , SeasonRoutes);
-app.use("/banner" , BannerRoutes);
-app.use("/blog" , BlogRoutes);
-app.use("/dashboard" , DashboardRoutes);
-app.use("/color" , ColorRoutes);
-app.use("/size" , SizeRoutes);
-app.use("/blogcategory" , BlogCatRoutes);
-app.use("/subscribe" , SubscribeRoutes);
-app.use("/contact" , contactRoutes);
-app.use("/api" , paymentGatewayRoutes);
-
-
-
+app.use("/season", SeasonRoutes);
+app.use("/banner", BannerRoutes);
+app.use("/blog", BlogRoutes);
+app.use("/dashboard", DashboardRoutes);
+app.use("/color", ColorRoutes);
+app.use("/size", SizeRoutes);
+app.use("/blogcategory", BlogCatRoutes);
+app.use("/subscribe", SubscribeRoutes);
+app.use("/contact", contactRoutes);
+app.use("/api", paymentGatewayRoutes);
 
 // app.use("/api" , menuRoutes);
 // app.use("/general" ,generelRoutes);
@@ -144,8 +134,10 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`\x1b[34m >>> \x1b[33m  App is listening at \x1b[32m${PORT} in \x1b[33m \x1b[1m ⚙️  DEVELOPMENT MODE\x1b[22m \x1b[0m ⚙️`);
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      `\x1b[34m >>> \x1b[33m  App is listening at \x1b[32m${PORT} in \x1b[33m \x1b[1m ⚙️  DEVELOPMENT MODE\x1b[22m \x1b[0m ⚙️`
+    );
   } else {
     console.log(`
     \x1b[35m╔══════════════════════════════════╗
