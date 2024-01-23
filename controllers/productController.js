@@ -8,7 +8,6 @@ const Season = require("../models/Season");
 const subCategory = require("../models/ProductSubCat");
 const subSubCategory = require("../models/ProductSubSubCat");
 
-
 // Create Product
 const addProduct = async (req, res, next) => {
   const {
@@ -351,7 +350,6 @@ const getAllProducts = async (req, res) => {
       console.log("maxPrice:", maxPrice);
     }
 
-    
     const products = await Product.find(filter).exec();
 
     return res.send({ success: true, products });
@@ -367,6 +365,12 @@ const getProductsByPriceRange = async (req, res, next) => {
 
     // Extract the range parameter from the request
     const priceRange = req.query.priceRange;
+    console.log("price range", priceRange)
+
+    // Define price queries based on the provided range
+    if (priceRange === "5000-undefined") {
+      priceRange = "5000+";
+    }
 
     // Define price queries based on the provided range
     switch (priceRange) {
@@ -376,11 +380,8 @@ const getProductsByPriceRange = async (req, res, next) => {
       case "1000-5000":
         priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case "5000-10000":
-        priceQuery = { "prices.calculatedPrice": { $gte: 5000, $lte: 10000 } };
-        break;
-      case "10000+":
-        priceQuery = { "prices.calculatedPrice": { $gte: 10000 } };
+      case "5000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
         break;
       default:
         return res.status(400).json({
@@ -388,11 +389,11 @@ const getProductsByPriceRange = async (req, res, next) => {
           error: "Invalid price range",
         });
     }
-
     // Fetch products based on the price range
     const products = await Product.find(priceQuery).select({
       name: 1,
       prices: 1,
+      imageGallery: 1,
       stock: 1,
       size: 1,
       color: 1,
@@ -415,9 +416,13 @@ const getProductsByPriceRange = async (req, res, next) => {
       OtherVariations: 1,
     });
 
+    // Count of products
+    const productCount = await Product.countDocuments(priceQuery);
+
     return res.status(200).json({
       success: true,
       message: `Products retrieved successfully for the price range ${priceRange}`,
+      productCount,
       products,
     });
   } catch (error) {
@@ -427,7 +432,7 @@ const getProductsByPriceRange = async (req, res, next) => {
       error: "Internal Server Error",
     });
   }
-};;
+};
 
 // Get Specific Product
 const getSpecificProduct = async (req, res) => {
@@ -475,7 +480,7 @@ const updateProduct = async (req, res) => {
       material,
       season,
       productColor,
-    productSize,
+      productSize,
     } = req.body;
     const Id = req.params.id;
     const imageGalleryFiles = req.files;
@@ -551,7 +556,6 @@ const updateProduct = async (req, res) => {
 
     console.log(addedImages, "481");
     console.log(productData.imageGallery, "482");
-   
 
     if (addedImages.length > 0) {
       productData.imageGallery = existingImageGallery.concat(addedImages);
@@ -666,9 +670,6 @@ const getProductsBysubSubCategoryId = async (req, res) => {
     console.error("Error fetching products by category:", error);
   }
 };
-
-
-
 
 module.exports = {
   getAllProducts,
