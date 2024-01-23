@@ -8,6 +8,7 @@ const Season = require("../models/Season");
 const subCategory = require("../models/ProductSubCat");
 const subSubCategory = require("../models/ProductSubSubCat");
 const mongoose = require("mongoose");
+const ProductVariantModel = require("../models/ProductVariant");
 
 
 // Create Product
@@ -98,7 +99,10 @@ const addProduct = async (req, res, next) => {
 
   try {
     const newProduct = await Product.create(productData);
+    const newProductVariant = await ProductVariantModel.create({productId:productData._id,productVariationId:productData.id});
+    newProductVariant.save();
     newProduct.mainProductId = newProduct._id;
+    
     await newProduct.save();
     res.send({
       success: true,
@@ -205,6 +209,9 @@ const addVarProduct = async (req, res, next) => {
     await oldProduct.save();
     newProduct.mainProductId = id;
     await newProduct.save();
+    const newProductVariant = await ProductVariantModel.create({productId:oldProduct._id,productVariationId:newProduct._id});
+    newProductVariant.save();
+
     res.send({
       success: true,
       newProduct,
@@ -399,7 +406,72 @@ const getAllProducts = async (req, res) => {
 const getSpecificProduct = async (req, res) => {
   const productId = req.params.id;
   try {
-    const product = await Product.findById(productId);
+    // Convert string to ObjectId
+    const objectId = new mongoose.Types.ObjectId(productId);
+
+    // Initial $match stage to filter the specific product
+    const matchStage = { $match: { _id: objectId } };
+
+    const newStages = [
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "ProductId",
+          as: "productStock",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          productStock: 1,
+          category: 1,
+          subCategory: 1,
+          subSubCategory: 1,
+          tags: 1,
+          prices: 1,
+          imageGallery: 1,
+          stock: 1,
+          hsnCode: 1,
+          size: 1,
+          shippingCharge: 1,
+          material: 1,
+          color: 1,
+          season: 1,
+          gst: 1,
+          sku: 1,
+          calculationOnWeight: 1,
+          weightType: 1,
+          weight: 1,
+          laborCost: 1,
+          discountOnLaborCost: 1,
+          isActive: 1,
+          isProductPopular: 1,
+          isProductNew: 1,
+          createdAt: 1,
+          filters: 1,
+          productColor: 1,
+          productSize: 1,
+          OtherVariations: 1,
+        },
+      },
+    ];
+
+
+    // Combine matchStage with newStages
+    const pipeline = [matchStage, ...newStages];
+
+    // Perform aggregation
+    const aggregatedProducts = await Product.aggregate(pipeline).exec();
+
+    // Since aggregation returns an array, get the first element
+    const product = aggregatedProducts[0];
     if (!product) {
       return res.send({ success: false, message: "Product not found." });
     }
@@ -408,6 +480,7 @@ const getSpecificProduct = async (req, res) => {
     return res.send({ success: false, error: "Failed to fetch the product." });
   }
 };
+
 
 const updateProduct = async (req, res) => {
   try {
