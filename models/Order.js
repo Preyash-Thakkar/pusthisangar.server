@@ -97,8 +97,8 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ["COD","UPI"],
-    default: "COD",
+    // enum: ["COD","UPI","NB"],
+    // default: "COD",
   },
   couponCode: {
     type: mongoose.Schema.Types.ObjectId,
