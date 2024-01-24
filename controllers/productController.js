@@ -408,7 +408,7 @@ const getProductsByPriceRange = async (req, res, next) => {
     let priceQuery;
 
     // Extract the range parameter from the request
-    const priceRange = req.query.priceRange;
+    let priceRange = req.query.priceRange;
     console.log("price range", priceRange)
 
     // Define price queries based on the provided range
@@ -416,7 +416,6 @@ const getProductsByPriceRange = async (req, res, next) => {
       priceRange = "5000+";
     }
 
-    // Define price queries based on the provided range
     switch (priceRange) {
       case "0-1000":
         priceQuery = { "prices.calculatedPrice": { $gte: 0, $lte: 1000 } };
@@ -424,8 +423,8 @@ const getProductsByPriceRange = async (req, res, next) => {
       case "1000-5000":
         priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case "5000+":
-        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
+      case "5000-1000000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000, $lte:1000000 } };
         break;
       default:
         return res.status(400).json({
@@ -433,39 +432,72 @@ const getProductsByPriceRange = async (req, res, next) => {
           error: "Invalid price range",
         });
     }
-    // Fetch products based on the price range
-    const products = await Product.find(priceQuery).select({
-      name: 1,
-      prices: 1,
-      imageGallery: 1,
-      stock: 1,
-      size: 1,
-      color: 1,
-      material: 1,
-      season: 1,
-      gst: 1,
-      sku: 1,
-      calculationOnWeight: 1,
-      weightType: 1,
-      weight: 1,
-      laborCost: 1,
-      discountOnLaborCost: 1,
-      isActive: 1,
-      createdAt: 1,
-      filters: 1,
-      isVariant: 1,
-      mainProductId: 1,
-      productColor: 1,
-      productSize: 1,
-      OtherVariations: 1,
-    });
+
+    // Aggregation stages
+    const newStages = [
+      {
+        $match: priceQuery
+      },
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "ProductId",
+          as: "productStock",
+        },
+      },
+      {
+        $project: {
+          // Add your fields here
+          name: 1,
+          description: 1,
+          productStock: 1,
+          category: 1,
+          subCategory: 1,
+          subSubCategory: 1,
+          tags: 1,
+          prices: 1,
+          imageGallery: 1,
+          stock: 1,
+          hsnCode: 1,
+          size: 1,
+          shippingCharge: 1,
+          material: 1,
+          color: 1,
+          season: 1,
+          gst: 1,
+          sku: 1,
+          calculationOnWeight: 1,
+          weightType: 1,
+          weight: 1,
+          laborCost: 1,
+          discountOnLaborCost: 1,
+          isActive: 1,
+          isProductPopular: 1,
+          isProductNew: 1,
+          createdAt: 1,
+          filters: 1,
+          productColor: 1,
+          productSize: 1,
+          OtherVariations: 1,
+        },
+      },
+    ];
+
+    // Perform aggregation
+    const products = await Product.aggregate(newStages);
 
     // Count of products
-    const productCount = await Product.countDocuments(priceQuery);
+    const productCount = products.length;
 
     return res.status(200).json({
       success: true,
-      message: `Products retrieved successfully for the price range ${priceRange}`,
+      message:`Products retrieved successfully for the price range ${priceRange}`,
       productCount,
       products,
     });
