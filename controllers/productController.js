@@ -7,6 +7,8 @@ const Material = require("../models/Material");
 const Season = require("../models/Season");
 const subCategory = require("../models/ProductSubCat");
 const subSubCategory = require("../models/ProductSubSubCat");
+const mongoose = require("mongoose");
+const ProductVariantModel = require("../models/ProductVariant");
 
 // Create Product
 const addProduct = async (req, res, next) => {
@@ -96,7 +98,10 @@ const addProduct = async (req, res, next) => {
 
   try {
     const newProduct = await Product.create(productData);
+    const newProductVariant = await ProductVariantModel.create({productId:productData._id,productVariationId:productData.id});
+    newProductVariant.save();
     newProduct.mainProductId = newProduct._id;
+    
     await newProduct.save();
     res.send({
       success: true,
@@ -203,6 +208,9 @@ const addVarProduct = async (req, res, next) => {
     await oldProduct.save();
     newProduct.mainProductId = id;
     await newProduct.save();
+    const newProductVariant = await ProductVariantModel.create({productId:oldProduct._id,productVariationId:newProduct._id});
+    newProductVariant.save();
+
     res.send({
       success: true,
       newProduct,
@@ -303,54 +311,90 @@ const getAllProductsForTable = async (req, res) => {
 // Get All Products
 const getAllProducts = async (req, res) => {
   try {
-    const category = req.query.category;
-    const color = req.query.color;
-    const material = req.query.material;
-    const season = req.query.season;
-    const minPrice = req.query.minPrice;
-    const maxPrice = req.query.maxPrice;
+    let { category, color, material, season, minPrice, maxPrice } = req.query;
+    console.log('Min Price', minPrice)
 
-    const filter = {};
+    // Convert string to ObjectId if necessary
+    console.log('Category:', category);
+    const categoryId = category ? new mongoose.Types.ObjectId(category) : undefined;
+    const materialId = material ? new mongoose.Types.ObjectId(material) : undefined;
+    console.log('Converted categoryId:', categoryId);
+    console.log('Mi n ', parseInt(minPrice))
+    // Initial $match stage based on your existing filter logic
+    const matchStage = {
+      $match: {
+        ...(categoryId && { category: categoryId }),
+        ...(color && { color }),
+        ...(materialId && { material: materialId }),
+        ...(season && { season }),
+        ...(minPrice &&
+          !isNaN(minPrice) && {
+            "prices.discounted": { $gte: parseInt(minPrice) },
+          }),
+        ...(maxPrice &&
+          !isNaN(maxPrice) && {
+            "prices.discounted": { $lte: parseInt(maxPrice) },
+          }),
+      },
+    };
 
-    if (category) {
-      filter.category = category;
-    }
+    const newStages = [
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "ProductId",
+          as: "productStock",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          productStock: 1,
+          category: 1,
+          subCategory: 1,
+          subSubCategory: 1,
+          tags: 1,
+          prices: 1,
+          imageGallery: 1,
+          stock: 1,
+          hsnCode: 1,
+          size: 1,
+          shippingCharge: 1,
+          material: 1,
+          color: 1,
+          season: 1,
+          gst: 1,
+          sku: 1,
+          calculationOnWeight: 1,
+          weightType: 1,
+          weight: 1,
+          laborCost: 1,
+          discountOnLaborCost: 1,
+          isActive: 1,
+          isProductPopular: 1,
+          isProductNew: 1,
+          createdAt: 1,
+          filters: 1,
+          productColor: 1,
+          productSize: 1,
+          OtherVariations: 1,
+        },
+      },
+    ];
 
-    if (color) {
-      filter.color = color;
-    }
+    // Combine matchStage with newStages
+    const pipeline = [matchStage, ...newStages];
 
-    if (material) {
-      filter.material = material;
-    }
 
-    if (season) {
-      filter.season = season;
-    }
+    const products = await Product.aggregate(pipeline).exec();
 
-    if (minPrice && !isNaN(minPrice)) {
-      if (filter.prices) {
-        if (filter.prices.discounted !== null) {
-          filter["prices.discounted"].$gte = minPrice;
-        } else if (filter.prices.calculatedPrice !== null) {
-          filter["prices.calculatedPrice"].$gte = minPrice;
-        }
-      }
-      console.log("minPrice:", minPrice);
-    }
-
-    if (maxPrice && !isNaN(maxPrice)) {
-      if (filter.prices) {
-        if (filter.prices.discounted !== null) {
-          filter["prices.discounted"].$lte = maxPrice;
-        } else if (filter.prices.calculatedPrice !== null) {
-          filter["prices.calculatedPrice"].$lte = maxPrice;
-        }
-      }
-      console.log("maxPrice:", maxPrice);
-    }
-
-    const products = await Product.find(filter).exec();
 
     return res.send({ success: true, products });
   } catch (error) {
@@ -438,7 +482,72 @@ const getProductsByPriceRange = async (req, res, next) => {
 const getSpecificProduct = async (req, res) => {
   const productId = req.params.id;
   try {
-    const product = await Product.findById(productId);
+    // Convert string to ObjectId
+    const objectId = new mongoose.Types.ObjectId(productId);
+
+    // Initial $match stage to filter the specific product
+    const matchStage = { $match: { _id: objectId } };
+
+    const newStages = [
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "ProductId",
+          as: "productStock",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          productStock: 1,
+          category: 1,
+          subCategory: 1,
+          subSubCategory: 1,
+          tags: 1,
+          prices: 1,
+          imageGallery: 1,
+          stock: 1,
+          hsnCode: 1,
+          size: 1,
+          shippingCharge: 1,
+          material: 1,
+          color: 1,
+          season: 1,
+          gst: 1,
+          sku: 1,
+          calculationOnWeight: 1,
+          weightType: 1,
+          weight: 1,
+          laborCost: 1,
+          discountOnLaborCost: 1,
+          isActive: 1,
+          isProductPopular: 1,
+          isProductNew: 1,
+          createdAt: 1,
+          filters: 1,
+          productColor: 1,
+          productSize: 1,
+          OtherVariations: 1,
+        },
+      },
+    ];
+
+
+    // Combine matchStage with newStages
+    const pipeline = [matchStage, ...newStages];
+
+    // Perform aggregation
+    const aggregatedProducts = await Product.aggregate(pipeline).exec();
+
+    // Since aggregation returns an array, get the first element
+    const product = aggregatedProducts[0];
     if (!product) {
       return res.send({ success: false, message: "Product not found." });
     }
@@ -447,6 +556,7 @@ const getSpecificProduct = async (req, res) => {
     return res.send({ success: false, error: "Failed to fetch the product." });
   }
 };
+
 
 const updateProduct = async (req, res) => {
   try {
