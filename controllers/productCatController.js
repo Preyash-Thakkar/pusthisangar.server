@@ -131,37 +131,64 @@ exports.getSubCategoriesAndSubSubCategoriesByCategoryId = async (req, res) => {
     const categoryId = req.params.id;
 
     // Use aggregation to get subcategories and their corresponding subsubcategories
-    const result = await subSubCategory.aggregate([
+    // const result = await subSubCategory.aggregate([
+    //   {
+    //     $match: {
+    //       Category: new mongoose.Types.ObjectId(categoryId),
+    //       isDeleted: false, // Optionally, include this condition if needed
+    //     },
+    //   },
+    //   {
+    //     $lookup: {
+    //       from: 'subcategories', // Adjust based on your actual collection name
+    //       localField: 'SubCategory',
+    //       foreignField: '_id',
+    //       as: 'subCategory',
+    //     },
+    //   },
+    //   {
+    //     $unwind: '$subCategory',
+    //   },
+    //   {
+    //     $group: {
+    //       _id: '$SubCategory',
+    //       subCategoryName: { $first: '$subCategory.name' },
+    //       subSubCategories: {
+    //         $push: {
+    //           id: '$_id',
+    //           name: '$name',
+    //         },
+    //       },
+    //     },
+    //   },
+    // ]);
+
+    const result = await Category.aggregate([
       {
-        $match: {
-          Category: new mongoose.Types.ObjectId(categoryId),
-          isDeleted: false, // Optionally, include this condition if needed
-        },
-      },
-      {
-        $lookup: {
-          from: 'subcategories', // Adjust based on your actual collection name
-          localField: 'SubCategory',
-          foreignField: '_id',
-          as: 'subCategory',
-        },
-      },
-      {
-        $unwind: '$subCategory',
-      },
-      {
-        $group: {
-          _id: '$SubCategory',
-          subCategoryName: { $first: '$subCategory.name' },
-          subSubCategories: {
-            $push: {
-              id: '$_id',
-              name: '$name',
-            },
-          },
-        },
-      },
+        '$match': {
+          '_id': new mongoose.Types.ObjectId(categoryId)
+        }
+      }, {
+        '$lookup': {
+          'from': 'subcategories', 
+          'localField': '_id', 
+          'foreignField': 'Category', 
+          'as': 'subcategories',  
+          'pipeline': [
+            {
+              '$lookup': {
+                'from': 'subsubcategories', 
+                'localField': '_id', 
+                'foreignField': 'SubCategory', 
+                'as': 'subsubcategories'
+              }
+            }
+          ]
+        }
+      }
     ]);
+
+console.log(result)
 
     res.send({
       success: true,

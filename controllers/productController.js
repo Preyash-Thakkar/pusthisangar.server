@@ -423,9 +423,9 @@ const getProductsByPriceRange = async (req, res, next) => {
       case "1000-5000":
         priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case "5000-1000000":
-        priceQuery = { "prices.calculatedPrice": { $gte: 5000, $lte:1000000 } };
-        break;
+        case "5000+":
+          priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
+          break;
       default:
         return res.status(400).json({
           success: false,
