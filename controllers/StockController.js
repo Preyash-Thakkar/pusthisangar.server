@@ -37,22 +37,55 @@ exports.createStock = async (req, res, next) => {
 };
 
 // Get all stock entries
+// const Stock = require('<path_to_stock_model>');
+
 exports.getAllStock = async (req, res, next) => {
   try {
-    const stocks = await Stock.find();
+    const stocks = await Stock.aggregate([
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'ProductId',
+          foreignField: '_id',
+          as: 'result',
+        },
+      },
+      {
+        $unwind: {
+          path: '$result',
+          includeArrayIndex: 'string',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          color: 1,
+          quantity: 1,
+          result: 1,
+          ProductId: 1,
+          size: 1,
+          currentPricePerUnit: 1,
+          date: 1,
+          sku: '$result.sku',
+        },
+      },
+    ]);
 
     return res.send({
       success: true,
-      message: "Stock entries retrieved successfully",
+      message: 'Stock entries retrieved successfully',
       stocks,
     });
   } catch (error) {
+    console.error(error); // Log the error for debugging purposes
     return res.send({
       success: false,
-      error: "Internal Server Error",
+      error: 'Internal Server Error',
     });
   }
 };
+
 
 // Get stock entry by ID
 exports.getStockById = async (req, res, next) => {
