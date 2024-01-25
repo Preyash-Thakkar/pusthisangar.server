@@ -98,10 +98,13 @@ const addProduct = async (req, res, next) => {
 
   try {
     const newProduct = await Product.create(productData);
-    const newProductVariant = await ProductVariantModel.create({productId:productData._id,productVariationId:productData.id});
+    const newProductVariant = await ProductVariantModel.create({
+      productId: productData._id,
+      productVariationId: productData.id,
+    });
     newProductVariant.save();
     newProduct.mainProductId = newProduct._id;
-    
+
     await newProduct.save();
     res.send({
       success: true,
@@ -208,7 +211,10 @@ const addVarProduct = async (req, res, next) => {
     await oldProduct.save();
     newProduct.mainProductId = id;
     await newProduct.save();
-    const newProductVariant = await ProductVariantModel.create({productId:oldProduct._id,productVariationId:newProduct._id});
+    const newProductVariant = await ProductVariantModel.create({
+      productId: oldProduct._id,
+      productVariationId: newProduct._id,
+    });
     newProductVariant.save();
 
     res.send({
@@ -312,14 +318,18 @@ const getAllProductsForTable = async (req, res) => {
 const getAllProducts = async (req, res) => {
   try {
     let { category, color, material, season, minPrice, maxPrice } = req.query;
-    console.log('Min Price', minPrice)
+    console.log("Min Price", minPrice);
 
     // Convert string to ObjectId if necessary
-    console.log('Category:', category);
-    const categoryId = category ? new mongoose.Types.ObjectId(category) : undefined;
-    const materialId = material ? new mongoose.Types.ObjectId(material) : undefined;
-    console.log('Converted categoryId:', categoryId);
-    console.log('Mi n ', parseInt(minPrice))
+    console.log("Category:", category);
+    const categoryId = category
+      ? new mongoose.Types.ObjectId(category)
+      : undefined;
+    const materialId = material
+      ? new mongoose.Types.ObjectId(material)
+      : undefined;
+    console.log("Converted categoryId:", categoryId);
+    console.log("Mi n ", parseInt(minPrice));
     // Initial $match stage based on your existing filter logic
     const matchStage = {
       $match: {
@@ -392,9 +402,7 @@ const getAllProducts = async (req, res) => {
     // Combine matchStage with newStages
     const pipeline = [matchStage, ...newStages];
 
-
     const products = await Product.aggregate(pipeline).exec();
-
 
     return res.send({ success: true, products });
   } catch (error) {
@@ -409,7 +417,7 @@ const getProductsByPriceRange = async (req, res, next) => {
 
     // Extract the range parameter from the request
     let priceRange = req.query.priceRange;
-    console.log("price range", priceRange)
+    console.log("price range", priceRange);
 
     // Define price queries based on the provided range
     if (priceRange === "5000-undefined") {
@@ -423,9 +431,9 @@ const getProductsByPriceRange = async (req, res, next) => {
       case "1000-5000":
         priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-        case "5000+":
-          priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
-          break;
+      case "5000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
+        break;
       default:
         return res.status(400).json({
           success: false,
@@ -436,7 +444,7 @@ const getProductsByPriceRange = async (req, res, next) => {
     // Aggregation stages
     const newStages = [
       {
-        $match: priceQuery
+        $match: priceQuery,
       },
       {
         $sort: {
@@ -497,7 +505,7 @@ const getProductsByPriceRange = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message:`Products retrieved successfully for the price range ${priceRange}`,
+      message: `Products retrieved successfully for the price range ${priceRange}`,
       productCount,
       products,
     });
@@ -571,7 +579,6 @@ const getSpecificProduct = async (req, res) => {
       },
     ];
 
-
     // Combine matchStage with newStages
     const pipeline = [matchStage, ...newStages];
 
@@ -588,7 +595,6 @@ const getSpecificProduct = async (req, res) => {
     return res.send({ success: false, error: "Failed to fetch the product." });
   }
 };
-
 
 const updateProduct = async (req, res) => {
   try {
