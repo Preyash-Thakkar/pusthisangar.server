@@ -80,6 +80,7 @@ app.use(morgan(customFormat));
 // ----------------------------------Define a custom morgan format ----------------------------------------
 
 app.use(cors());
+app.options("*",cors());
 app.use("/uploads", express.static("./uploads"));
 app.use("/gallery-images", express.static("./uploads/Gallery"));
 app.use("/products", express.static("./uploads/Products"));

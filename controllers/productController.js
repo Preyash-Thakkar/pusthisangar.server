@@ -629,10 +629,15 @@ const updateProduct = async (req, res) => {
       season,
       productColor,
       productSize,
+      OtherVariations,
     } = req.body;
     const Id = req.params.id;
     const imageGalleryFiles = req.files;
     const productToUpdate = await Product.findById(Id);
+
+    console.log("OtherVariations",OtherVariations);
+
+    
 
     const shouldRecalculatePrice =
       req.body.calculationOnWeight === "true" &&
@@ -690,6 +695,7 @@ const updateProduct = async (req, res) => {
       material: material,
       season: season,
       productColor: productColor,
+      OtherVariations:OtherVariations,
       productSize: productSize,
     };
 
