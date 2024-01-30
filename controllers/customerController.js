@@ -8,11 +8,9 @@ const Token = require("../models/tokenModel");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
 const Product = require("../models/Products");
-const gstModel = require('../models/Gst');
+const gstModel = require("../models/Gst");
 const PriceUpdate = require("../models/PriceUpdate");
-const Stock = require("../models/Stock")
-
-
+const Stock = require("../models/Stock");
 
 const app = express();
 app.use(cookieParser());
@@ -128,7 +126,6 @@ const getCustomers = async (req, res) => {
   }
 };
 
-
 // Get LoggedIn Customer
 const getLoggedInCustomer = async (req, res) => {
   let customerId = req.body.id;
@@ -186,13 +183,10 @@ const updateCustomer = async (req, res) => {
     const CustomerId = req.params.id;
     console.log(CustomerId);
     const { username } = req.body;
-  
-    const updateData = await Customer.findByIdAndUpdate(
-      CustomerId,
-    {
-      username : username
-    }
-    );
+
+    const updateData = await Customer.findByIdAndUpdate(CustomerId, {
+      username: username,
+    });
 
     if (!updateData) {
       return res.send({
@@ -262,7 +256,7 @@ const updateCustomerPassword = async (req, res) => {
 const forgotCustomerPassword = async (req, res) => {
   let { email } = req.body;
   const customer = await Customer.findOne({ email });
-  
+
   if (!customer) {
     res.send({ success: false, msg: "Customer not found" });
   }
@@ -289,7 +283,7 @@ const forgotCustomerPassword = async (req, res) => {
 
   // Construct Reset Url
   const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
-  console.log(resetUrl)
+  console.log(resetUrl);
 
   // Reset Email
   const message = `
@@ -319,8 +313,6 @@ const resetCustomerPassword = async (req, res) => {
   const { password } = req.body;
   const { resetToken } = req.params;
 
-
-
   // Hash token then compare to Token in DB
   const hashedToken = crypto
     .createHash("sha256")
@@ -348,7 +340,7 @@ const resetCustomerPassword = async (req, res) => {
 
   // Set the new password
   customer.password = password;
-  
+
   try {
     // Save the updated customer document
     await customer.save();
@@ -363,14 +355,11 @@ const resetCustomerPassword = async (req, res) => {
   }
 };
 
-
 // Delete Specific Customer
 const DeleteCustomer = async (req, res, next) => {
   try {
     const customerId = req.body.id;
-    const record = await Customer.findByIdAndDelete(
-      customerId,
-    );
+    const record = await Customer.findByIdAndDelete(customerId);
 
     if (!record) {
       return res.send({ success: true, message: "record not found" });
@@ -385,8 +374,9 @@ const DeleteCustomer = async (req, res, next) => {
 // Add to Cart
 const addToCart = async (req, res) => {
   const CustomerId = req.params.id;
+  console.log("customer",CustomerId)
   const { productId, quantity } = req.body;
-  console.log(req.body);
+  console.log("body",req.body);
 
   try {
     // Find the customer by ID and populate the cartItems field with product details
@@ -403,15 +393,15 @@ const addToCart = async (req, res) => {
 
     // Check if the product already exists in the cart
     const existingCartItem = customer.cartItems.find(
-      (item) => item.product._id.toString() === productId
+      (item) => item?.product?._id.toString() === productId
     );
+    console.log("ex",existingCartItem)
 
     if (existingCartItem) {
       existingCartItem.quantity += parseInt(quantity);
     } else {
-      
-      const product = await Product.findById(productId); 
-      const GST = await gstModel.findById(product.gst); 
+      const product = await Product.findById(productId);
+      const GST = await gstModel.findById(product.gst);
 
       if (!product) {
         return res.status(404).json({
@@ -423,7 +413,7 @@ const addToCart = async (req, res) => {
       customer.cartItems.push({
         product: product,
         quantity: parseInt(quantity),
-        tax : GST.gst
+        tax: GST.gst,
       });
     }
     // Save the updated cart
@@ -445,7 +435,7 @@ const addToCart = async (req, res) => {
 
 // GetLoggedInCustomer's Cart Item
 // const getLoggedInCustomerCartItems = async (req, res) => {
-//   const customerId = req.params.id; 
+//   const customerId = req.params.id;
 
 //   try {
 //     const customer = await Customer.findById(customerId).populate(
@@ -459,7 +449,6 @@ const addToCart = async (req, res) => {
 //       });
 //     }
 
-    
 //     const cartItems = customer.cartItems.map((item) => ({
 //       product: item.product,
 //       quantity: item.quantity,
@@ -495,17 +484,15 @@ const getLoggedInCustomerCartItems = async (req, res) => {
       });
     }
 
-  
     const cartItems = await Promise.all(
       customer.cartItems.map(async (item) => {
-      
         const stock = await Stock.findOne({ ProductId: item.product._id });
 
         return {
           product: item.product,
           quantity: item.quantity,
           tax: item.tax,
-          stock: stock || null, 
+          stock: stock || null,
         };
       })
     );
@@ -689,7 +676,7 @@ const addToWishlist = async (req, res) => {
           msg: "Product not found",
         });
       }
-      
+
       customer.wishlist.push(productId);
       await customer.save();
 
@@ -720,9 +707,7 @@ const getLoggedInCustomerWishlistItems = async (req, res) => {
 
   try {
     // Find the customer by ID and populate the cartItems field with product details
-    const customer = await Customer.findById(customerId).populate(
-      "wishlist"
-    );
+    const customer = await Customer.findById(customerId).populate("wishlist");
 
     if (!customer) {
       return res.status(404).json({
@@ -804,47 +789,49 @@ const removeFromWishlist = async (req, res) => {
 const getOrderHistorybyCustomerId = async (req, res) => {
   try {
     const customerId = req.params.id;
-    const customer = await Customer.findById(customerId).populate('orderHistory'); 
+    const customer = await Customer.findById(customerId).populate(
+      "orderHistory"
+    );
 
     if (!customer) {
-      return res.send({ message: 'Customer not found' });
+      return res.send({ message: "Customer not found" });
     }
 
-    const orderHistory = customer.orderHistory; 
+    const orderHistory = customer.orderHistory;
 
-    res.send({success:true, orderHistory:orderHistory});
+    res.send({ success: true, orderHistory: orderHistory });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
-
 const getCustomerReportByDateRange = async (req, res) => {
   try {
-    
     const { startDate, endDate } = req.query;
 
     // Ensure that startDate and endDate are valid date strings in the "DD/MM/YYYY" format
     const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    
+
     if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
-      return res.status(400).json({ success: false, msg: "Please provide valid date range in the 'DD/MM/YYYY' format." });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          msg: "Please provide valid date range in the 'DD/MM/YYYY' format.",
+        });
     }
 
- 
-    const [,  startMonth, startDay ,startYear] = startDate.match(datePattern);
-    const [,  endMonth, endDay,endYear] = endDate.match(datePattern);
+    const [, startMonth, startDay, startYear] = startDate.match(datePattern);
+    const [, endMonth, endDay, endYear] = endDate.match(datePattern);
 
-  
     const start = new Date(`${startYear}-${startMonth}-${startDay}`);
     const end = new Date(`${endYear}-${endMonth}-${endDay}`);
 
-    
     const customers = await Customer.find({
       createdAt: {
-        $gte: start, 
-        $lte: end,   
+        $gte: start,
+        $lte: end,
       },
     });
 
