@@ -629,11 +629,16 @@ const updateProduct = async (req, res) => {
       season,
       productColor,
       productSize,
+      OtherVariations,
     } = req.body;
     const Id = req.params.id;
     const imageGalleryFiles = req.files;
     const productToUpdate = await Product.findById(Id);
 
+    console.log("OtherVariations___________", typeof OtherVariations);
+    
+    const otherVariationsIDs = OtherVariations.map((variation) => variation.value);
+    console.log("freeeee", otherVariationsIDs);
     const shouldRecalculatePrice =
       req.body.calculationOnWeight === "true" &&
       (req.body.weightType !== productToUpdate.weightType ||
@@ -657,6 +662,8 @@ const updateProduct = async (req, res) => {
     if (!productToUpdate) {
       return res.send({ error: "SubSubCategory not found" });
     }
+    // const otherVariationsIDs = OtherVariations.map((variation) => variation.value);
+    // console.log("freeeee",otherVariationsIDs);
     let existingImageGallery = imageGallery || [];
     const productData = {
       name: name,
@@ -690,6 +697,7 @@ const updateProduct = async (req, res) => {
       material: material,
       season: season,
       productColor: productColor,
+      OtherVariations:OtherVariations,
       productSize: productSize,
     };
 
