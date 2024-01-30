@@ -38,7 +38,7 @@ router.post("/getvarproduct/:id", getVarProductById);
 router.post("/getvarproduct", getAllVarProducts);
 router.post("/getspecificproduct/:id", getSpecificProduct);
 router.post("/updateproduct/:id",upload.array("imageGallery", 10), updateProduct);
-router.post("/getproductsbycategoryid/:id", getProductsByCategoryId);
+router.post("/getproductsbycategoryid", getProductsByCategoryId);
 router.post("/deleteproduct/:id", deleteProduct);
 router.post("/getproductbytags", getProductsByTag);
 router.post("/getproductsbysubcategories/:id", getProductsBysubCategoryId);

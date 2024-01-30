@@ -741,10 +741,28 @@ const deleteProduct = async (req, res) => {
 
 // Get Products by CategoryId
 const getProductsByCategoryId = async (req, res) => {
-  const categoryId = req.params.id;
+  const cat = req.query.categoryId;
+  const subCat = req.query.subCategoryId;
+  const subSubCat = req.query.subSubCategory;
+  console.log(req.query);
+
+  // If categoryId exists, add it to the query filter
 
   try {
-    const products = await Product.find({ category: categoryId }).exec();
+    let query = {};
+
+    if (cat) {
+      query.category = cat;
+    }
+    if (subCat) {
+      query.subCategory = subCat;
+    }
+    // If subSubCategory exists, add it to the query filter
+    if (subSubCat) {
+      query.subSubCategory = subSubCat;
+    }
+
+    const products = await Product.find(query).exec();
 
     if (!products || products.length === 0) {
       return res.send({
