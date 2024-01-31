@@ -517,6 +517,102 @@ const getProductsByPriceRange = async (req, res, next) => {
     });
   }
 };
+const getProductsByCategoryAndPriceRange = async (req, res, next) => {
+  try {
+    const categoryId = req.params.id || undefined;
+const subcategoryId = req.params.subcategoryId || undefined;
+const subsubcategoryId = req.params.subsubcategoryId || undefined;
+const priceRange = req.query.priceRange;
+
+console.log("hefhehf", categoryId);
+console.log("nnvnmvm", subcategoryId);
+console.log("jfjgfjjfj", subsubcategoryId);
+
+
+    console.log("hefhehf",categoryId);
+    console.log("nnvnmvm",subcategoryId);
+    console.log("jfjgfjjfj",subsubcategoryId);
+
+    // Check if categoryId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid category ID',
+      });
+    }
+
+    // Define price queries based on the provided range
+    let priceQuery;
+
+    switch (priceRange) {
+      case '0-1000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+        break;
+      case '1000-5000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+        break;
+      case '5000+':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid price range',
+        });
+    }
+
+    // Define category query
+    const categoryQuery = { 'category': new mongoose.Types.ObjectId(categoryId) };
+
+    // Define subcategory query if provided
+    const subcategoryQuery = subcategoryId
+      ? { 'subCategory': new mongoose.Types.ObjectId(subcategoryId) }
+      : {};
+
+    // Define subsubcategory query if provided
+    const subsubcategoryQuery = subsubcategoryId
+      ? { 'subSubCategory': subsubcategoryId }
+      : {};
+
+    // Your existing aggregation stages
+    const newStages = [
+      {
+        $match: {
+          $and: [
+            categoryQuery,
+            subcategoryQuery,
+            subsubcategoryQuery,
+            priceQuery
+          ].filter(query => Object.keys(query).length !== 0)
+        },
+      },
+      // ... (other existing stages)
+    ];
+
+    // Perform aggregation
+    const products = await Product.aggregate(newStages);
+
+    // Count of products
+    const productCount = products.length;
+
+    return res.status(200).json({
+      success: true,
+      message: `Products retrieved successfully for the category ${categoryId}, subcategory ${subcategoryId}, subsubcategoryId ${subsubcategoryId}, and price range ${priceRange}`,
+      productCount,
+      products,
+    });
+  } catch (error) {
+    console.error('Error fetching products by category and price range:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+};
+
+
+
+
 
 // Get Specific Product
 const getSpecificProduct = async (req, res) => {
@@ -842,4 +938,5 @@ module.exports = {
   getProductsByTag,
   getProductsBysubCategoryId,
   getProductsBysubSubCategoryId,
+  getProductsByCategoryAndPriceRange
 };
