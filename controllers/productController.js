@@ -9,7 +9,7 @@ const subCategory = require("../models/ProductSubCat");
 const subSubCategory = require("../models/ProductSubSubCat");
 const mongoose = require("mongoose");
 const ProductVariantModel = require("../models/ProductVariant");
-
+const { ObjectId } = mongoose.Types;
 // Create Product
 const addProduct = async (req, res, next) => {
   const {
@@ -845,42 +845,52 @@ const deleteProduct = async (req, res) => {
 
 // Get Products by CategoryId
 const getProductsByCategoryId = async (req, res) => {
-  const cat = req.query.categoryId;
-  const subCat = req.query.subCategoryId;
-  const subSubCat = req.query.subSubCategory;
-  console.log(req.query);
-
-  // If categoryId exists, add it to the query filter
+  const { categoryId, subCategoryId, subSubCategory } = req.query;
 
   try {
-    let query = {};
+    const matchConditions = {};
 
-    if (cat) {
-      query.category = cat;
-    }
-    if (subCat) {
-      query.subCategory = subCat;
-    }
-    // If subSubCategory exists, add it to the query filter
-    if (subSubCat) {
-      query.subSubCategory = subSubCat;
-    }
+    // Assuming the fields are stored as ObjectId in MongoDB
+    if (categoryId) matchConditions.category = new ObjectId(categoryId);
+    if (subCategoryId) matchConditions.subCategory = new ObjectId(subCategoryId);
+    if (subSubCategory) matchConditions.subSubCategory = subSubCategory;
 
-    const products = await Product.find(query).exec();
+    // Add similar conversions for subCategoryId and subSubCategory if needed
 
+    // Use the correct field names as stored in your MongoDB documents
+    const aggregationPipeline = [
+      { $match: matchConditions },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "productId",
+          as: "productStock",
+        },
+      },
+      // Your $project stage as previously defined
+    ];
+
+    const products = await Product.aggregate(aggregationPipeline).exec();
+
+    console.log(categoryId, products.length, "--------------len");
     if (!products || products.length === 0) {
       return res.send({
         success: false,
-        message: "No products found for the specified category.",
+        message: "No products found for the specified categories.",
       });
     }
 
     return res.send({ success: true, products });
   } catch (error) {
     console.error("Error fetching products by category:", error);
+    return res.status(500).send({
+      success: false,
+      message: "An error occurred while fetching products.",
+    });
   }
 };
-
 // Get product by product tags
 const getProductsByTag = async (req, res) => {
   try {
