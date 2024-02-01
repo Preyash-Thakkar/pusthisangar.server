@@ -54,8 +54,6 @@ const addProduct = async (req, res, next) => {
 
   let calculatedPrice = 0;
 
-  console.log(calculationOnWeight);
-
   if (calculationOnWeight === "true") {
     const priceUpdate = await PriceUpdate.findById(weightType);
     calculatedPrice = priceUpdate.price * weight + weight * discountOnLaborCost;
@@ -150,15 +148,12 @@ const addVarProduct = async (req, res, next) => {
     productColor,
     productSize,
   } = req.body;
-  console.log(req.body);
 
   const imageGalleryFiles = req.files;
 
   const imageGallery = imageGalleryFiles.map((file) => file.filename);
 
   let calculatedPrice = 0;
-
-  console.log(calculationOnWeight);
 
   if (calculationOnWeight === "true") {
     const priceUpdate = await PriceUpdate.findById(weightType);
@@ -206,7 +201,6 @@ const addVarProduct = async (req, res, next) => {
   try {
     const newProduct = await Product.create(productData);
     const oldProduct = await Product.findById(id);
-    console.log(oldProduct._id);
     oldProduct.OtherVariations.push(newProduct._id);
     await oldProduct.save();
     newProduct.mainProductId = id;
@@ -262,7 +256,6 @@ const getVarProductById = async (req, res) => {
 
 const getAllVarProducts = async (req, res) => {
   const { productIds } = req.body;
-  console.log(req.body);
 
   try {
     const products = await Product.find({ _id: { $in: productIds } });
@@ -318,18 +311,13 @@ const getAllProductsForTable = async (req, res) => {
 const getAllProducts = async (req, res) => {
   try {
     let { category, color, material, season, minPrice, maxPrice } = req.query;
-    console.log("Min Price", minPrice);
-
-    // Convert string to ObjectId if necessary
-    console.log("Category:", category);
     const categoryId = category
       ? new mongoose.Types.ObjectId(category)
       : undefined;
     const materialId = material
       ? new mongoose.Types.ObjectId(material)
       : undefined;
-    console.log("Converted categoryId:", categoryId);
-    console.log("Mi n ", parseInt(minPrice));
+    
     // Initial $match stage based on your existing filter logic
     const matchStage = {
       $match: {
@@ -417,7 +405,6 @@ const getProductsByPriceRange = async (req, res, next) => {
 
     // Extract the range parameter from the request
     let priceRange = req.query.priceRange;
-    console.log("price range", priceRange);
 
     // Define price queries based on the provided range
     if (priceRange === "5000-undefined") {
@@ -517,21 +504,11 @@ const getProductsByPriceRange = async (req, res, next) => {
     });
   }
 };
+
 const getProductsByCategoryAndPriceRange = async (req, res, next) => {
   try {
-    const categoryId = req.params.id || undefined;
-const subcategoryId = req.params.subcategoryId || undefined;
-const subsubcategoryId = req.params.subsubcategoryId || undefined;
-const priceRange = req.query.priceRange;
-
-console.log("hefhehf", categoryId);
-console.log("nnvnmvm", subcategoryId);
-console.log("jfjgfjjfj", subsubcategoryId);
-
-
-    console.log("hefhehf",categoryId);
-    console.log("nnvnmvm",subcategoryId);
-    console.log("jfjgfjjfj",subsubcategoryId);
+    const categoryId = req.params.id;
+    const priceRange = req.query.priceRange;
 
     // Check if categoryId is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -561,30 +538,10 @@ console.log("jfjgfjjfj", subsubcategoryId);
         });
     }
 
-    // Define category query
-    const categoryQuery = { 'category': new mongoose.Types.ObjectId(categoryId) };
-
-    // Define subcategory query if provided
-    const subcategoryQuery = subcategoryId
-      ? { 'subCategory': new mongoose.Types.ObjectId(subcategoryId) }
-      : {};
-
-    // Define subsubcategory query if provided
-    const subsubcategoryQuery = subsubcategoryId
-      ? { 'subSubCategory': subsubcategoryId }
-      : {};
-
     // Your existing aggregation stages
     const newStages = [
       {
-        $match: {
-          $and: [
-            categoryQuery,
-            subcategoryQuery,
-            subsubcategoryQuery,
-            priceQuery
-          ].filter(query => Object.keys(query).length !== 0)
-        },
+        $match: { $and: [{ 'category': new mongoose.Types.ObjectId(categoryId) }, priceQuery] },
       },
       // ... (other existing stages)
     ];
@@ -597,7 +554,7 @@ console.log("jfjgfjjfj", subsubcategoryId);
 
     return res.status(200).json({
       success: true,
-      message: `Products retrieved successfully for the category ${categoryId}, subcategory ${subcategoryId}, subsubcategoryId ${subsubcategoryId}, and price range ${priceRange}`,
+      message: `Products retrieved successfully for the category ${categoryId} and price range ${priceRange}`,
       productCount,
       products,
     });
@@ -609,6 +566,124 @@ console.log("jfjgfjjfj", subsubcategoryId);
     });
   }
 };
+
+const getProductsByCategoryAndPriceRangeSubCategory = async (req, res, next) => {
+  try {
+    const { id, subcategoryId } = req.params;
+    const priceRange = req.query.priceRange;
+
+    // Check if subcategoryId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid subcategory ID',
+      });
+    }
+
+    // Define price queries based on the provided range
+    let priceQuery;
+
+    switch (priceRange) {
+      case '0-1000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+        break;
+      case '1000-5000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+        break;
+      case '5000+':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid price range',
+        });
+    }
+
+    // Your existing aggregation stages
+    const newStages = [
+      {
+        $match: { $and: [{ 'subCategory': new mongoose.Types.ObjectId(subcategoryId) }, priceQuery] },
+      },
+      // ... (other existing stages)
+    ];
+
+    // Perform aggregation
+    const products = await Product.aggregate(newStages);
+
+    // Count of products
+    const productCount = products.length;
+
+    return res.status(200).json({
+      success: true,
+      message: `Products retrieved successfully for the subcategory ${subcategoryId} and price range ${priceRange}`,
+      productCount,
+      products,
+    });
+  } catch (error) {
+    console.error('Error fetching products by subcategory and price range:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+};
+
+const getProductsByCategoryAndPriceRangeSubsub = async (req, res, next) => {
+  try {
+    const { id, subcategoryId, subsubcategoryId } = req.params;
+
+    const priceRange = req.query.priceRange;
+
+    // Define price queries based on the provided range
+    let priceQuery;
+
+    switch (priceRange) {
+      case '0-1000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+        break;
+      case '1000-5000':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+        break;
+      case '5000+':
+        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid price range',
+        });
+    }
+
+    // Your existing aggregation stages
+    const newStages = [
+      {
+        $match: { $and: [{ 'subSubCategory': subsubcategoryId }, priceQuery] },
+      },
+      // ... (other existing stages)
+    ];
+
+    // Perform aggregation
+    const products = await Product.aggregate(newStages);
+
+    // Count of products
+    const productCount = products.length;
+
+    return res.status(200).json({
+      success: true,
+      message: `Products retrieved successfully for the subsubcategory ${subsubcategoryId} and price range ${priceRange}`,
+      productCount,
+      products,
+    });
+  } catch (error) {
+    console.error('Error fetching products by subsubcategory and price range:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+    });
+  }
+};
+
 
 
 
@@ -806,9 +881,6 @@ const updateProduct = async (req, res) => {
       existingImageGallery = [existingImageGallery];
     }
 
-    console.log(addedImages, "481");
-    console.log(productData.imageGallery, "482");
-
     if (addedImages.length > 0) {
       productData.imageGallery = existingImageGallery.concat(addedImages);
     }
@@ -845,6 +917,7 @@ const deleteProduct = async (req, res) => {
 
 // Get Products by CategoryId
 const getProductsByCategoryId = async (req, res) => {
+
   const { categoryId, subCategoryId, subSubCategory } = req.query;
 
   try {
@@ -966,5 +1039,7 @@ module.exports = {
   getProductsByTag,
   getProductsBysubCategoryId,
   getProductsBysubSubCategoryId,
-  getProductsByCategoryAndPriceRange
+  getProductsByCategoryAndPriceRange,
+  getProductsByCategoryAndPriceRangeSubCategory,
+  getProductsByCategoryAndPriceRangeSubsub,
 };

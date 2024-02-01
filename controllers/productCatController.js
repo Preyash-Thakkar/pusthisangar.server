@@ -7,14 +7,14 @@ const mongoose = require('mongoose');
 // Create a new category
 
 exports.createCategory = async (req, res) => {
-  console.log(req.file)
+  
   const body = {
     name: req.body.name,
     description: req.body.description,
     image: req.file ? req.file.filename : "",
     isActive : req.body.isActive,
   };
-  console.log(body)
+ 
   const ItemIsUnique =
     (await Category.find({
       name: req.body.name,
@@ -50,7 +50,7 @@ exports.getAllCategories = async (req, res) => {
 exports.getCategoryById = async (req, res) => {
   try {
     const categoryId = req.params.id;
-    console.log(categoryId);
+  
     const category = await Category.findById(categoryId);
 
     if (!category) {
@@ -188,7 +188,7 @@ exports.getSubCategoriesAndSubSubCategoriesByCategoryId = async (req, res) => {
       }
     ]);
 
-console.log(result)
+
 
     res.send({
       success: true,

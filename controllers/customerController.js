@@ -24,7 +24,6 @@ const registerCustomer = async (req, res) => {
   try {
     const { username, email, password, confirmPassword, phone, active } =
       req.body;
-    console.log(req.body);
 
     // Check if password and confirmPassword match
     if (password !== confirmPassword) {
@@ -50,7 +49,6 @@ const registerCustomer = async (req, res) => {
 // Customer's Login
 const loginCustomer = async (req, res) => {
   const { email, password } = req.body;
-  console.log(req.body);
 
   // Validation
   if (!email || !password) {
@@ -163,7 +161,7 @@ const getSpecificCustomer = async (req, res) => {
 // Get LoggedIn Status
 const loginStatus = async (req, res) => {
   const token = req.body.token;
-  // console.log(token);
+  
   if (!token) {
     return res.send({ success: false });
   }
@@ -181,7 +179,7 @@ const loginStatus = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     const CustomerId = req.params.id;
-    console.log(CustomerId);
+  
     const { username } = req.body;
 
     const updateData = await Customer.findByIdAndUpdate(CustomerId, {
@@ -211,7 +209,6 @@ const updateCustomerPassword = async (req, res) => {
     const customerId = req.params.id;
     const customer = await Customer.findById(customerId);
     const { oldPassword, newPassword } = req.body;
-    console.log(req.body);
     if (!customer) {
       return res.send({
         success: false,
@@ -265,7 +262,6 @@ const forgotCustomerPassword = async (req, res) => {
 
   // Create Rest Token
   let resetToken = crypto.randomBytes(32).toString("hex") + customer._id;
-  console.log(resetToken);
 
   // Hash token before saving to db
   const hashedToken = crypto
@@ -283,7 +279,6 @@ const forgotCustomerPassword = async (req, res) => {
 
   // Construct Reset Url
   const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
-  console.log(resetUrl);
 
   // Reset Email
   const message = `
@@ -324,8 +319,6 @@ const resetCustomerPassword = async (req, res) => {
     token: hashedToken,
     expiresAt: { $gt: Date.now() },
   });
-
-  console.log(customerToken);
 
   if (!customerToken) {
     return res.send("Invalid or Expired Token");
@@ -374,9 +367,8 @@ const DeleteCustomer = async (req, res, next) => {
 // Add to Cart
 const addToCart = async (req, res) => {
   const CustomerId = req.params.id;
-  console.log("customer",CustomerId)
+
   const { productId, quantity } = req.body;
-  console.log("body",req.body);
 
   try {
     // Find the customer by ID and populate the cartItems field with product details
@@ -395,8 +387,6 @@ const addToCart = async (req, res) => {
     const existingCartItem = customer.cartItems.find(
       (item) => item?.product?._id.toString() === productId
     );
-    console.log("ex",existingCartItem)
-
     if (existingCartItem) {
       existingCartItem.quantity += parseInt(quantity);
     } else {
@@ -513,8 +503,6 @@ const getLoggedInCustomerCartItems = async (req, res) => {
 const removeFromCart = async (req, res) => {
   const customerId = req.params.id; // Customer ID
   const { productId } = req.body; // Product ID
-  // console.log(req.body);
-  // console.log(req.params.id);
 
   try {
     // Find the customer by ID
@@ -739,8 +727,6 @@ const getLoggedInCustomerWishlistItems = async (req, res) => {
 const removeFromWishlist = async (req, res) => {
   const customerId = req.params.id; // Customer ID
   const { productId } = req.body; // Product ID
-  // console.log(req.body);
-  // console.log(req.params.id);
 
   try {
     // Find the customer by ID
