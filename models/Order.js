@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
+const { any } = require("../middlewares/multerMiddleware");
 const { Schema } = mongoose;
 
 const orderSchema = new mongoose.Schema({
   customer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Customer",
+  },
+  transactionId:{
+    type: mongoose.Schema.Types.Mixed
   },
   FirstName: {
     type: String,
