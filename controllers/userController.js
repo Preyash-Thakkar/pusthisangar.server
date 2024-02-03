@@ -22,7 +22,6 @@ const registerUser = asyncHandler(async (req, res) => {
   try {
     const { name, email, password, confirmPassword ,roles, active } = req.body;
     const ProfilePhoto = req.file.path;
-    console.log(req.body);
 
       // Check if password and confirmPassword match
       if (password !== confirmPassword) {
@@ -144,7 +143,6 @@ const getSpecificUser = asyncHandler(async (req, res) => {
 //   Get login Status
 const loginStatus = asyncHandler(async (req, res) => {
   const token = req.body.token;
-  console.log(token);
   if (!token) {
     return res.send({ success: false });
   }
@@ -190,7 +188,6 @@ const updateUser = asyncHandler(async (req, res) => {
 const updatePassword = asyncHandler(async (req, res) => {
   const user = await User.findById(req.body.id);
   const { oldPassword, newPassword, id } = req.body;
-  console.log(req.body);
   if (!user) {
     return res.send({ success: false, msg: "User not found , Please signup" });
   }
@@ -231,7 +228,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
   // Create Rest Token
   let resetToken = crypto.randomBytes(32).toString("hex") + user._id;
-  console.log(resetToken);
 
   // Hash token before saving to db
   const hashedToken = crypto
@@ -297,7 +293,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   // Find User
   const user = await User.findOne({ _id: userToken.userId });
   user.password = password;
-  console.log(user);
+
   user.save();
 
   return res.send({

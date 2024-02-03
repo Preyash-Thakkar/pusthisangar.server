@@ -2,7 +2,6 @@ const PriceUpdate = require("../models/PriceUpdate");
 
 const AddPriceUpdate = async (req, res) => {
   try {
-    console.log(req);
     const Price = new PriceUpdate(req.body);
     await Price.save();
     return res.send({
@@ -18,7 +17,6 @@ const AddPriceUpdate = async (req, res) => {
 const updatePrice = async (req, res) => {
   try {
     const Id = req.params.id;
-    console.log(Id);
     const price = await PriceUpdate.findById(Id);
     
     if (!price) {
@@ -28,7 +26,6 @@ const updatePrice = async (req, res) => {
     const updateData = {
       price: req.body.price,
     };
-    console.log(updateData)
 
     // Add { new: true } to get the updated document
     const updatedRecord = await PriceUpdate.findByIdAndUpdate(Id, updateData, { new: true });

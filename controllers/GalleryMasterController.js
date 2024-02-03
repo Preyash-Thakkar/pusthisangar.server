@@ -18,7 +18,7 @@ exports.addNewImageInGallary = async (req, res, next) => {
     imagePath: req.file ? req.file.filename : "",
     active : req.body.active,
   };
-  console.log(body);
+ 
   const ItemIsUnique =
     (await gallaryMasterModel.find({
         imageTitle: req.body.imageTitle,

@@ -9,8 +9,6 @@ exports.getBanner = async (req, res, next) => {
 };
 
 exports.addNewBanner = async (req, res, next) => {
-  console.log(req.body);
-  console.log(req.file);
   const body = {
     bannerTitle: req.body.bannerTitle,
     bannerType: req.body.bannerType,

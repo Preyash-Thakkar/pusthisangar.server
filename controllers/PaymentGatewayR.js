@@ -56,8 +56,6 @@ const newPayment = async (req, res) => {
 
         if (response.data.success === true) {
             const url = response.data.data.instrumentResponse.redirectInfo.url;
-            console.log("Response of payment:", response.data);
-            console.log("Data:", response.data.data.instrumentResponse);
             return res.status(200).json({  url:url});
         } else {
             console.error("Payment request failed:", response.data);

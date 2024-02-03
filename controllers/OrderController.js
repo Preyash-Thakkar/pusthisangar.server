@@ -93,7 +93,9 @@ exports.createOrder = async (req, res, next) => {
       { new: true }
     );
 
+
     console.log(updatedInvoice.lattestInvoice);
+
 
     const newOrder = await Order.create({
       customer: customer,
