@@ -20,7 +20,7 @@ const newPayment = async (req, res) => {
             merchantUserId: req.body.MUID,
             name: req.body.name,
             amount: req.body.amount * 100,
-            redirectUrl: `hhttps://server.pushtishangar.com/api/status/${merchantTransactionId}`,
+            redirectUrl: `https://server.pushtishangar.com/api/status/${merchantTransactionId}`,
             redirectMode: 'POST',
             mobileNumber: req.body.number.toString(),
             paymentInstrument: {
