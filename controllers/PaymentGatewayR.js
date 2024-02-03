@@ -77,8 +77,8 @@ const checkStatus = async (req, res) => {
     try {
         const merchantTransactionId = req.params.txnId;
         // const merchantId = res.req.body.merchantId;
-        const merchantId = "PGTESTPAYUAT";
-        const salt_key = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+        const merchantId = "M22VUO6F0UCZI";
+        const salt_key = "b08aa1a4-66d7-42b5-a8df-9df382f87a58";
 
         const keyIndex = 1;
         const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + salt_key;
