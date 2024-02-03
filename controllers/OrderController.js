@@ -4,20 +4,17 @@ const Product = require("../models/Products");
 const GST = require("../models/Gst");
 const Stock = require("../models/Stock");
 const lattestInvoiceModel = require("../models/lattestInvoice");
-const Category = require('../models/ProductCat');
-
+const Category = require("../models/ProductCat");
 
 exports.getOrders = async (req, res, next) => {
   try {
     const orders = await Order.find().lean();
-    
+
     return res.send({ orders });
   } catch (error) {
     return res.send({ error: error.message });
   }
 };
-
-
 
 exports.createOrder = async (req, res, next) => {
   const {
@@ -34,45 +31,71 @@ exports.createOrder = async (req, res, next) => {
     shippingAddress,
     paymentMethod,
     couponCode,
+    transactionId,
     giftVoucher,
   } = req.body;
 
   try {
     products.forEach((element) => {
       Stock.find({
-        $and: [
-          { ProductId: element.product },
-          { quantity: { $gt: 0 } }
-        ]
-      }).then((filteredStock) => {
-        const itemWithOldestDate = filteredStock.reduce(
-          (oldestItem, currentItem) => {
-            if (
-              !oldestItem ||
-              currentItem.date.getTime() < oldestItem.date.getTime()
-            ) {
-              return currentItem;
-            }
-            return oldestItem;
-          },
-          null
-        );
-      
-        const updatedQuantity = itemWithOldestDate.quantity - element.quantity;
-        Stock.findByIdAndUpdate(itemWithOldestDate._id, {
-          quantity: updatedQuantity,
-        }).then((filteredStock) => {
+        $and: [{ ProductId: element.product }, { quantity: { $gt: 0 } }],
+      })
+        .then((filteredStock) => {
+          if (filteredStock.length === 0) {
+            console.log("No stock found for product", element.product);
+            return; // Exit the current iteration of forEach if no stock found
+          }
 
-         
+          const itemWithOldestDate = filteredStock.reduce(
+            (oldestItem, currentItem) => {
+              if (
+                !oldestItem ||
+                currentItem.date.getTime() < oldestItem.date.getTime()
+              ) {
+                return currentItem;
+              }
+              return oldestItem;
+            },
+            null
+          );
+
+          // Check if itemWithOldestDate is not null
+          if (itemWithOldestDate) {
+            console.log("hh", itemWithOldestDate.name);
+            console.log("I", itemWithOldestDate.quantity);
+            console.log("Items", element.quantity);
+            const updatedQuantity =
+              itemWithOldestDate.quantity - element.quantity;
+
+            Stock.findByIdAndUpdate(itemWithOldestDate._id, {
+              quantity: updatedQuantity,
+            })
+              .then((updatedStock) => {
+                // Handle the success of updating stock
+              })
+              .catch((error) => {
+                // Handle possible errors
+                console.error("Error updating stock:", error);
+              });
+          } else {
+            console.log("No oldest item found for product", element.product);
+          }
+        })
+        .catch((error) => {
+          // Handle possible errors from Stock.find
+          console.error("Error finding stock:", error);
         });
-      });
     });
 
     const updatedInvoice = await lattestInvoiceModel.findByIdAndUpdate(
-      { _id: "652f8866c509652ac19e0e8b" }, 
-      { $inc: { lattestInvoice: 1 } }, 
+      { _id: "652f8866c509652ac19e0e8b" },
+      { $inc: { lattestInvoice: 1 } },
       { new: true }
     );
+
+
+    console.log(updatedInvoice.lattestInvoice);
+
 
     const newOrder = await Order.create({
       customer: customer,
@@ -88,12 +111,13 @@ exports.createOrder = async (req, res, next) => {
       shippingAddress: shippingAddress,
       paymentMethod: paymentMethod,
       couponCode: couponCode,
-      isInvoiceGenrated:updatedInvoice?true:false,
-      invoiceNumber:updatedInvoice.lattestInvoice,
-      invoiceGenrationDate: new Date()
+      isInvoiceGenrated: updatedInvoice ? true : false,
+      invoiceNumber: updatedInvoice.lattestInvoice,
+      invoiceGenrationDate: new Date(),
+      transactionId:transactionId,     
       // giftVoucher: giftVoucher,
     });
-    
+    // T1706873792999
     const customerDoc = await Customer.findById(customer);
     if (customerDoc) {
       customerDoc.orderHistory.push(newOrder._id);
@@ -224,7 +248,7 @@ exports.getHighValueCustomers = async (req, res, next) => {
       },
     ]);
 
-    return res.send({success:true, highValueCustomers: highValueCustomers });
+    return res.send({ success: true, highValueCustomers: highValueCustomers });
   } catch (error) {
     return res.send({ error: error.message });
   }
@@ -266,12 +290,11 @@ exports.getMedValueCustomers = async (req, res, next) => {
       },
     ]);
 
-    return res.send({ success: true,  highValueCustomers: highValueCustomers });
+    return res.send({ success: true, highValueCustomers: highValueCustomers });
   } catch (error) {
     return res.send({ error: error.message });
   }
 };
-
 
 exports.getTopSellingProducts = async (req, res, next) => {
   try {
@@ -299,12 +322,14 @@ exports.getTopSellingProducts = async (req, res, next) => {
       })
     );
 
-    return res.send({ success: true, topSellingProducts: topSellingProductDetails });
+    return res.send({
+      success: true,
+      topSellingProducts: topSellingProductDetails,
+    });
   } catch (error) {
     return res.send({ success: false, error: error.message });
   }
 };
-
 
 // exports.getStockReportByProduct = async (req, res, next) => {
 //   try {
@@ -332,8 +357,3 @@ exports.getTopSellingProducts = async (req, res, next) => {
 //     return res.send({ success: false, error: error.message });
 //   }
 // };
-
-
-
-
-
