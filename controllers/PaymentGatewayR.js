@@ -107,7 +107,7 @@ const checkStatus = async (req, res) => {
       const transUpdate = await Order.findOneAndUpdate(
         { transactionId: req.body.transactionId },
         {
-          status: req.body.code,
+          status: completed,
         },
         { new: true }
       );
@@ -150,7 +150,7 @@ const checkStatus = async (req, res) => {
       const transUpdate = await Order.findOneAndUpdate(
         { transactionId: req.body.transactionId },
         {
-          status: req.body.code,
+          status: cancelled,
         },
         { new: true }
       );
