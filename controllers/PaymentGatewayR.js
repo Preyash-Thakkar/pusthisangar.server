@@ -1,4 +1,3 @@
-paymentgatewayr
 
 const crypto = require("crypto");
 const axios = require("axios");
@@ -76,7 +75,16 @@ const newPayment = async (req, res) => {
         });
     }
 };
-
+const phonePeCallBack = (req, res) => {
+  console.log("in callback");
+  console.log(req.body);
+  console.log("end callback");
+  // catch {}
+  // res.status(200).json('sent')
+  // res.end('sent')
+  // res.end()
+  // res.send('')
+};
 const checkStatus = async (req, res) => {
   try {
     console.log("in redirect");
