@@ -244,7 +244,7 @@ async function fetchPaymentStatus(transactionId) {
     console.log("sha256", sha256);
     const options = {
       method: "GET",
-      url: `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${transactionId}`,
+      url: `https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${transactionId}`,
       headers: {
         accept: "application/json",
         "Content-Type": "application/json",
