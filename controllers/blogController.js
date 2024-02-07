@@ -115,13 +115,8 @@ exports.updateBlog = async (req, res, next) => {
 
 exports.deleteBlog = async (req, res, next) => {
   try {
-    const record = await blogModel.findByIdAndUpdate(
+    const record = await blogModel.findByIdAndDelete(
       req.params.id,
-      {
-        deleted: true,
-        deletedAt: new Date(),
-      },
-      { new: true }
     );
 
     if (!record) {
