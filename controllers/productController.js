@@ -310,31 +310,7 @@ const getAllProductsForTable = async (req, res) => {
 // Get All Products
 const getAllProducts = async (req, res) => {
   try {
-    let { category, color, material, season, minPrice, maxPrice } = req.query;
-    const categoryId = category
-      ? new mongoose.Types.ObjectId(category)
-      : undefined;
-    const materialId = material
-      ? new mongoose.Types.ObjectId(material)
-      : undefined;
     
-    // Initial $match stage based on your existing filter logic
-    const matchStage = {
-      $match: {
-        ...(categoryId && { category: categoryId }),
-        ...(color && { color }),
-        ...(materialId && { material: materialId }),
-        ...(season && { season }),
-        ...(minPrice &&
-          !isNaN(minPrice) && {
-            "prices.discounted": { $gte: parseInt(minPrice) },
-          }),
-        ...(maxPrice &&
-          !isNaN(maxPrice) && {
-            "prices.discounted": { $lte: parseInt(maxPrice) },
-          }),
-      },
-    };
 
     const newStages = [
       {
@@ -388,10 +364,11 @@ const getAllProducts = async (req, res) => {
     ];
 
     // Combine matchStage with newStages
-    const pipeline = [matchStage, ...newStages];
+    const pipeline = [newStages];
+    console.log("ppppp",pipeline)
 
     const products = await Product.aggregate(pipeline).exec();
-
+    console.log("Products",products);
     return res.send({ success: true, products });
   } catch (error) {
     console.log(error);
@@ -916,38 +893,67 @@ const deleteProduct = async (req, res) => {
 };
 
 // Get Products by CategoryId
-const getProductsByCategoryId = async (req, res) => {
 
+const getProductsByCategoryId = async (req, res) => {
   const { categoryId, subCategoryId, subSubCategory } = req.query;
 
   try {
-    const matchConditions = {};
-
-    // Assuming the fields are stored as ObjectId in MongoDB
-    if (categoryId) matchConditions.category = new ObjectId(categoryId);
-    if (subCategoryId) matchConditions.subCategory = new ObjectId(subCategoryId);
-    if (subSubCategory) matchConditions.subSubCategory = subSubCategory;
-
-    // Add similar conversions for subCategoryId and subSubCategory if needed
-
-    // Use the correct field names as stored in your MongoDB documents
     const aggregationPipeline = [
-      { $match: matchConditions },
+      {
+        $match: {
+          ...(categoryId && { category: new ObjectId(categoryId) }),
+          ...(subCategoryId && { subCategory: new ObjectId(subCategoryId) }),
+          ...(subSubCategory && { subSubCategory: subSubCategory }),
+        },
+      },
       { $sort: { createdAt: -1 } },
       {
         $lookup: {
           from: "stocks",
           localField: "_id",
-          foreignField: "productId",
+          foreignField: "ProductId",
           as: "productStock",
         },
       },
-      // Your $project stage as previously defined
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          productStock: 1,
+          category: 1,
+          subCategory: 1,
+          subSubCategory: 1,
+          tags: 1,
+          prices: 1,
+          imageGallery: 1,
+          stock: 1,
+          hsnCode: 1,
+          size: 1,
+          shippingCharge: 1,
+          material: 1,
+          color: 1,
+          season: 1,
+          gst: 1,
+          sku: 1,
+          calculationOnWeight: 1,
+          weightType: 1,
+          weight: 1,
+          laborCost: 1,
+          discountOnLaborCost: 1,
+          isActive: 1,
+          isProductPopular: 1,
+          isProductNew: 1,
+          createdAt: 1,
+          filters: 1,
+          productColor: 1,
+          productSize: 1,
+          OtherVariations: 1,
+        },
+      }
     ];
 
     const products = await Product.aggregate(aggregationPipeline).exec();
 
-    console.log(categoryId, products.length, "--------------len");
     if (!products || products.length === 0) {
       return res.send({
         success: false,
@@ -964,6 +970,22 @@ const getProductsByCategoryId = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Get product by product tags
 const getProductsByTag = async (req, res) => {
   try {
