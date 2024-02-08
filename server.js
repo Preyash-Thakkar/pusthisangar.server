@@ -92,7 +92,7 @@ app.use("/color", express.static("./uploads/Color"));
 // Routes Middleware
 
 app.use("/api", userRoute);
-// app.use("/api", roleRoutes);
+app.use("/api", roleRoutes);
 app.use("/category", productCatRoutes);
 app.use("/subcategory", productSubCatRoutes);
 app.use("/subsubcategory", productSubSubCatRoutes);

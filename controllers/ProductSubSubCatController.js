@@ -125,10 +125,9 @@ exports.updateSubSubCategoryById = async (req, res, next) => {
 exports.deleteSubSubCategoryById = async (req, res) => {
   try {
     const subSubCategoryId = req.params.id;
-    const subSubCategory = await SubSubCategory.findByIdAndUpdate(
+    const subSubCategory = await SubSubCategory.findByIdAndDelete(
       subSubCategoryId,
-      { isDeleted: true },
-      { new: true }
+   
     );
 
     if (!subSubCategory) {
