@@ -34,7 +34,7 @@ exports.addContents = async (req, res, next) => {
 exports.getContentsbyId = async (req, res, next) => {
   try {
     const contentId = req.params.id;
-    const content = await contentModela.findById(contentId);
+    const content = await contentModela.findOne({_id: contentId,active: true});
 
     if (!content || content.deleted) {
       return res.send({ error: "Content not found" });
