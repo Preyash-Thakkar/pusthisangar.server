@@ -97,8 +97,8 @@ const addProduct = async (req, res, next) => {
   try {
     const newProduct = await Product.create(productData);
     const newProductVariant = await ProductVariantModel.create({
-      productId: productData._id,
-      productVariationId: productData.id,
+      productId: newProduct._id,
+      productVariationId: newProduct._id,
     });
     newProductVariant.save();
     newProduct.mainProductId = newProduct._id;
