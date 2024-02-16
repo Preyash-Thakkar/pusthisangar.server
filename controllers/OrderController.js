@@ -33,7 +33,10 @@ exports.createOrder = async (req, res, next) => {
     couponCode,
     transactionId,
     giftVoucher,
+    phone
   } = req.body;
+
+  console.log("Req hone",phone);
 
   try {
     products.forEach((element) => {
@@ -60,7 +63,7 @@ exports.createOrder = async (req, res, next) => {
           );
 
           // Check if itemWithOldestDate is not null
-          if (itemWithOldestDate) {
+          if (itemWithOldestDate && paymentMethod == "COD") {
             console.log("hh", itemWithOldestDate.name);
             console.log("I", itemWithOldestDate.quantity);
             console.log("Items", element.quantity);
@@ -93,9 +96,7 @@ exports.createOrder = async (req, res, next) => {
       { new: true }
     );
 
-
     console.log(updatedInvoice.lattestInvoice);
-
 
     const newOrder = await Order.create({
       customer: customer,
@@ -114,10 +115,12 @@ exports.createOrder = async (req, res, next) => {
       isInvoiceGenrated: updatedInvoice ? true : false,
       invoiceNumber: updatedInvoice.lattestInvoice,
       invoiceGenrationDate: new Date(),
-      transactionId:transactionId,     
+      transactionId: transactionId,
+      phone:phone
       // giftVoucher: giftVoucher,
     });
     // T1706873792999
+    console.log("its phone",phone)
     const customerDoc = await Customer.findById(customer);
     if (customerDoc) {
       customerDoc.orderHistory.push(newOrder._id);

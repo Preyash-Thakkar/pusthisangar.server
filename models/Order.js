@@ -16,6 +16,9 @@ const orderSchema = new mongoose.Schema({
   LastName: {
     type: String,
   },
+  phone:{
+    type:String
+  },
   products: [
     {
       product: {
