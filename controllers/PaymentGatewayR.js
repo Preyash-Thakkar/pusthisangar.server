@@ -3,7 +3,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
 const Order = require("../models/Order");
-
+const Stock = require("../models/Stock");
 // import axios from "axios";
 
 // const {salt_key, merchant_id} = require('./secret')
@@ -96,7 +96,7 @@ const checkStatus = async (req, res) => {
 
     const transaction = await Order.findOne({
       transactionId: req.body.transactionId,
-    });
+    }).populate('products.product'); // Ensure you are populating the product details to access its ID for stock update
 
     if (!transaction) {
       console.error("Transaction not found");
@@ -111,56 +111,46 @@ const checkStatus = async (req, res) => {
         },
         { new: true }
       );
-      // const trans = await PaymentGateway.findOne({
-      //   transactionId: req.body.transactionId,
-      // });
-      // const prospect = await Prospect.findOneAndUpdate(
-      //   { _id: trans.StakeHolderId },
-      //   {
-      //     PackageID: trans.subPackageId,
-      //     PackageStartDt: trans.subPackageStartDt,
-      //     PackageEndDt: trans.subPackageEndDt,
-      //     IsPaid: true,
-      //     IsActive: true,
-      //     transactionId: req.body.transactionId,
-      //   },
-      //   { new: true }
-      // );
 
-      // Make an API request to get payment status (optional)
-      console.log("yeee", transaction.transactionId);
+      // Assuming transaction.products contains the necessary product and quantity information
+      // Reduce stock quantity here
+      if (transUpdate && transUpdate.status === "completed") {
+        for (const element of transUpdate.products) {
+          const product = element.product; // Assuming this is the product ID
+          const quantityToReduce = element.quantity;
 
-      const paymentStatus = await fetchPaymentStatus(transaction.transactionId);
+          // Find the stock for the product
+          const stock = await Stock.findOne({ ProductId: product, quantity: { $gt: 0 } }).sort({ date: 1 }); // Find the oldest stock entry
+          if (stock) {
+            stock.quantity -= quantityToReduce;
+            await stock.save();
+            console.log(`Stock updated for product ${product}: ${stock.quantity}`);
+          } else {
+            console.log(`No stock found or not enough stock for product ${product}`);
+          }
+        }
+      }
 
-      console.log("payment status", paymentStatus);
-
-      // console.log("payment status", paymentStatus);
-
-      // const updatePaymentStatus = await PaymentGateway.findOneAndUpdate(
-      //   { _id: req.body.transactionId },
-      //   {
-      //     paymentInstrument: paymentStatus,
-      //   },
-      //   { new: true }
-      // );
-
+      console.log("Payment success for transaction", transaction.transactionId);
       res.redirect(getSuccessRedirectURL());
-      // res.end()
     } else {
-      const transUpdate = await Order.findOneAndUpdate(
+      await Order.findOneAndUpdate(
         { transactionId: req.body.transactionId },
         {
           status: "cancelled",
         },
         { new: true }
       );
+      console.log("Payment failed or cancelled for transaction", req.body.transactionId);
       res.redirect(getFailureRedirectURL());
-      // res.end()
     }
   } catch (err) {
-    console.log("error",err);
+    console.error("error", err);
+    // Optionally redirect to a failure URL on error
+    res.redirect(getFailureRedirectURL());
   }
 };
+
 
 // exports.phonePeRedirect = async (req, res) => {
 //     try {

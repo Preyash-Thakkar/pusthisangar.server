@@ -39,6 +39,9 @@ const addProduct = async (req, res, next) => {
     filters,
     material,
     season,
+    productColor,
+    productSize,
+    OtherVariations,
   } = req.body;
 
   const imageGalleryFiles = req.files;
@@ -49,6 +52,10 @@ const addProduct = async (req, res, next) => {
   //     error: "Main image and image gallery files are required.",
   //   });
   // }
+
+  console.log("All products",productColor,
+    productSize,
+    OtherVariations,)
 
   const imageGallery = imageGalleryFiles.map((file) => file.filename);
 
@@ -92,6 +99,9 @@ const addProduct = async (req, res, next) => {
     color: color,
     material: material,
     season: season,
+    productColor:productColor,
+    productSize:productSize,
+    OtherVariations:OtherVariations,
   };
 
   try {
@@ -196,6 +206,7 @@ const addVarProduct = async (req, res, next) => {
     isVariant: true,
     productColor: productColor,
     productSize: productSize,
+    OtherVariations:OtherVariations
   };
 
   try {
@@ -310,8 +321,6 @@ const getAllProductsForTable = async (req, res) => {
 // Get All Products
 const getAllProducts = async (req, res) => {
   try {
-    
-
     const newStages = [
       {
         $sort: {
@@ -365,10 +374,10 @@ const getAllProducts = async (req, res) => {
 
     // Combine matchStage with newStages
     const pipeline = [newStages];
-    console.log("ppppp",pipeline)
+    console.log("ppppp", pipeline);
 
     const products = await Product.aggregate(pipeline).exec();
-    console.log("Products",products);
+    console.log("Products", products);
     return res.send({ success: true, products });
   } catch (error) {
     console.log(error);
@@ -491,7 +500,7 @@ const getProductsByCategoryAndPriceRange = async (req, res, next) => {
     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid category ID',
+        error: "Invalid category ID",
       });
     }
 
@@ -499,26 +508,31 @@ const getProductsByCategoryAndPriceRange = async (req, res, next) => {
     let priceQuery;
 
     switch (priceRange) {
-      case '0-1000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+      case "0-1000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 0, $lte: 1000 } };
         break;
-      case '1000-5000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+      case "1000-5000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case '5000+':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+      case "5000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
         break;
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid price range',
+          error: "Invalid price range",
         });
     }
 
     // Your existing aggregation stages
     const newStages = [
       {
-        $match: { $and: [{ 'category': new mongoose.Types.ObjectId(categoryId) }, priceQuery] },
+        $match: {
+          $and: [
+            { category: new mongoose.Types.ObjectId(categoryId) },
+            priceQuery,
+          ],
+        },
       },
       // ... (other existing stages)
     ];
@@ -536,15 +550,22 @@ const getProductsByCategoryAndPriceRange = async (req, res, next) => {
       products,
     });
   } catch (error) {
-    console.error('Error fetching products by category and price range:', error);
+    console.error(
+      "Error fetching products by category and price range:",
+      error
+    );
     return res.status(500).json({
       success: false,
-      error: 'Internal Server Error',
+      error: "Internal Server Error",
     });
   }
 };
 
-const getProductsByCategoryAndPriceRangeSubCategory = async (req, res, next) => {
+const getProductsByCategoryAndPriceRangeSubCategory = async (
+  req,
+  res,
+  next
+) => {
   try {
     const { id, subcategoryId } = req.params;
     const priceRange = req.query.priceRange;
@@ -553,7 +574,7 @@ const getProductsByCategoryAndPriceRangeSubCategory = async (req, res, next) => 
     if (!mongoose.Types.ObjectId.isValid(subcategoryId)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid subcategory ID',
+        error: "Invalid subcategory ID",
       });
     }
 
@@ -561,26 +582,31 @@ const getProductsByCategoryAndPriceRangeSubCategory = async (req, res, next) => 
     let priceQuery;
 
     switch (priceRange) {
-      case '0-1000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+      case "0-1000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 0, $lte: 1000 } };
         break;
-      case '1000-5000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+      case "1000-5000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case '5000+':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+      case "5000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
         break;
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid price range',
+          error: "Invalid price range",
         });
     }
 
     // Your existing aggregation stages
     const newStages = [
       {
-        $match: { $and: [{ 'subCategory': new mongoose.Types.ObjectId(subcategoryId) }, priceQuery] },
+        $match: {
+          $and: [
+            { subCategory: new mongoose.Types.ObjectId(subcategoryId) },
+            priceQuery,
+          ],
+        },
       },
       // ... (other existing stages)
     ];
@@ -598,10 +624,13 @@ const getProductsByCategoryAndPriceRangeSubCategory = async (req, res, next) => 
       products,
     });
   } catch (error) {
-    console.error('Error fetching products by subcategory and price range:', error);
+    console.error(
+      "Error fetching products by subcategory and price range:",
+      error
+    );
     return res.status(500).json({
       success: false,
-      error: 'Internal Server Error',
+      error: "Internal Server Error",
     });
   }
 };
@@ -616,26 +645,26 @@ const getProductsByCategoryAndPriceRangeSubsub = async (req, res, next) => {
     let priceQuery;
 
     switch (priceRange) {
-      case '0-1000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 0, $lte: 1000 } };
+      case "0-1000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 0, $lte: 1000 } };
         break;
-      case '1000-5000':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 1000, $lte: 5000 } };
+      case "1000-5000":
+        priceQuery = { "prices.calculatedPrice": { $gte: 1000, $lte: 5000 } };
         break;
-      case '5000+':
-        priceQuery = { 'prices.calculatedPrice': { $gte: 5000 } };
+      case "5000+":
+        priceQuery = { "prices.calculatedPrice": { $gte: 5000 } };
         break;
       default:
         return res.status(400).json({
           success: false,
-          error: 'Invalid price range',
+          error: "Invalid price range",
         });
     }
 
     // Your existing aggregation stages
     const newStages = [
       {
-        $match: { $and: [{ 'subSubCategory': subsubcategoryId }, priceQuery] },
+        $match: { $and: [{ subSubCategory: subsubcategoryId }, priceQuery] },
       },
       // ... (other existing stages)
     ];
@@ -653,18 +682,16 @@ const getProductsByCategoryAndPriceRangeSubsub = async (req, res, next) => {
       products,
     });
   } catch (error) {
-    console.error('Error fetching products by subsubcategory and price range:', error);
+    console.error(
+      "Error fetching products by subsubcategory and price range:",
+      error
+    );
     return res.status(500).json({
       success: false,
-      error: 'Internal Server Error',
+      error: "Internal Server Error",
     });
   }
 };
-
-
-
-
-
 
 // Get Specific Product
 const getSpecificProduct = async (req, res) => {
@@ -746,7 +773,7 @@ const getSpecificProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
-    // console.log(req.body)
+    // Destructure all fields from req.body
     const {
       name,
       description,
@@ -779,101 +806,85 @@ const updateProduct = async (req, res) => {
       productSize,
       OtherVariations,
     } = req.body;
+
     const Id = req.params.id;
     const imageGalleryFiles = req.files;
+
+    // Fetch the product to update
     const productToUpdate = await Product.findById(Id);
-
-    console.log("OtherVariations___________", typeof OtherVariations);
-    
-    const otherVariationsIDs = OtherVariations.map((variation) => variation.value);
-    console.log("freeeee", otherVariationsIDs);
-    const shouldRecalculatePrice =
-      req.body.calculationOnWeight === "true" &&
-      (req.body.weightType !== productToUpdate.weightType ||
-        req.body.weight !== productToUpdate.weight ||
-        req.body.discountOnLaborCost !== productToUpdate.discountOnLaborCost);
-
-    let calculatedPrice = productToUpdate.prices.calculatedPrice;
-
-    if (original !== productToUpdate.prices.original) {
-      // Recalculate the calculated price based on the new original price
-      calculatedPrice = original;
-    }
-
-    if (shouldRecalculatePrice) {
-      const priceUpdate = await PriceUpdate.findById(req.body.weightType);
-      calculatedPrice =
-        priceUpdate.price * req.body.weight +
-        req.body.weight * req.body.discountOnLaborCost;
-    }
-
     if (!productToUpdate) {
-      return res.send({ error: "SubSubCategory not found" });
+      return res.status(404).send({ success: false, error: "Product not found" });
     }
-    // const otherVariationsIDs = OtherVariations.map((variation) => variation.value);
-    // console.log("freeeee",otherVariationsIDs);
-    let existingImageGallery = imageGallery || [];
-    const productData = {
-      name: name,
-      description: description,
-      category: category,
-      subCategory: subCategory,
-      subSubCategory: subSubCategory,
-      tags: tags,
+
+    // Process OtherVariations: Convert 'Empty' to an empty array or use as is
+    let processedOtherVariations = OtherVariations === 'Empty' ? [] : OtherVariations;
+
+    // Prepare the update object, including logic for recalculating price if necessary
+    let calculatedPrice = original; // Default to the provided original price
+    if (calculationOnWeight === "true") {
+      const priceUpdate = await PriceUpdate.findById(weightType);
+      calculatedPrice = priceUpdate ? (priceUpdate.price * weight + weight * discountOnLaborCost) : original;
+    }
+
+    // Prepare product data for update, including handling of image gallery and other fields
+    const updateData = {
+      name,
+      description,
+      category,
+      subCategory,
+      subSubCategory,
+      tags,
       prices: {
-        original: original,
-        discounted: discounted,
-        calculatedPrice: calculatedPrice,
+        original,
+        discounted,
+        calculatedPrice,
       },
-      imageGallery: existingImageGallery,
       stock: { quantity: stock },
-      hsnCode: hsnCode,
-      size: size,
-      shippingCharge: shippingCharge,
-      gst: gst,
-      sku: sku,
-      calculationOnWeight: calculationOnWeight,
-      weightType: weightType,
-      weight: weight,
-      laborCost: laborCost,
-      discountOnLaborCost: discountOnLaborCost ? discountOnLaborCost : null,
-      isActive: isActive,
-      isProductPopular: isProductPopular,
-      isProductNew: isProductNew,
-      filters: filters,
-      color: color,
-      material: material,
-      season: season,
-      productColor: productColor,
-      OtherVariations:OtherVariations,
-      productSize: productSize,
+      hsnCode,
+      size,
+      shippingCharge,
+      gst,
+      sku,
+      calculationOnWeight,
+      weightType,
+      weight,
+      laborCost,
+      discountOnLaborCost,
+      isActive,
+      isProductPopular,
+      isProductNew,
+      filters,
+      color,
+      material,
+      season,
+      productColor,
+      productSize,
+      OtherVariations: processedOtherVariations, // Update with processed OtherVariations
     };
 
-    let addedImages = imageGalleryFiles.map((file) => file.filename);
-
-    if (!Array.isArray(addedImages)) {
-      addedImages = [addedImages];
-    }
-    if (!Array.isArray(existingImageGallery)) {
-      existingImageGallery = [existingImageGallery];
+    // Handle image gallery updates
+    if (imageGalleryFiles && imageGalleryFiles.length > 0) {
+      const imageFilenames = imageGalleryFiles.map(file => file.filename);
+      updateData.imageGallery = [...productToUpdate.imageGallery, ...imageFilenames];
     }
 
-    if (addedImages.length > 0) {
-      productData.imageGallery = existingImageGallery.concat(addedImages);
-    }
+    // Update the product in the database
+    await Product.findByIdAndUpdate(Id, updateData, { new: true });
 
-    await Product.findByIdAndUpdate(Id, productData);
-    const UpdatedProduct = await Product.findById(Id);
+    // Fetch the updated product to return in the response
+    const updatedProduct = await Product.findById(Id);
 
     res.send({
       success: true,
-      msg: "Product updated successfully",
-      data: UpdatedProduct,
+      message: "Product updated successfully",
+      data: updatedProduct,
     });
   } catch (error) {
-    return res.send({ error: error.message });
+    console.error("Error updating product:", error);
+    res.status(500).send({ success: false, error: "Internal Server Error" });
   }
 };
+
 
 // Delete Product
 const deleteProduct = async (req, res) => {
@@ -949,7 +960,7 @@ const getProductsByCategoryId = async (req, res) => {
           productSize: 1,
           OtherVariations: 1,
         },
-      }
+      },
     ];
 
     const products = await Product.aggregate(aggregationPipeline).exec();
@@ -970,21 +981,6 @@ const getProductsByCategoryId = async (req, res) => {
     });
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Get product by product tags
 const getProductsByTag = async (req, res) => {

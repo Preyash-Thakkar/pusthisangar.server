@@ -60,7 +60,7 @@ exports.createOrder = async (req, res, next) => {
           );
 
           // Check if itemWithOldestDate is not null
-          if (itemWithOldestDate) {
+          if (itemWithOldestDate && paymentMethod == "COD") {
             console.log("hh", itemWithOldestDate.name);
             console.log("I", itemWithOldestDate.quantity);
             console.log("Items", element.quantity);
@@ -93,9 +93,7 @@ exports.createOrder = async (req, res, next) => {
       { new: true }
     );
 
-
     console.log(updatedInvoice.lattestInvoice);
-
 
     const newOrder = await Order.create({
       customer: customer,
@@ -114,7 +112,7 @@ exports.createOrder = async (req, res, next) => {
       isInvoiceGenrated: updatedInvoice ? true : false,
       invoiceNumber: updatedInvoice.lattestInvoice,
       invoiceGenrationDate: new Date(),
-      transactionId:transactionId,     
+      transactionId: transactionId,
       // giftVoucher: giftVoucher,
     });
     // T1706873792999
