@@ -251,57 +251,61 @@ const updateCustomerPassword = async (req, res) => {
 
 // Forget Password
 const forgotCustomerPassword = async (req, res) => {
-  let { email } = req.body;
-  const customer = await Customer.findOne({ email });
-
-  if (!customer) {
-    res.send({ success: false, msg: "Customer not found" });
-  }
-  // Delete Token if it exist in DB
-  await Token.findOneAndDelete({ customerId: customer._id });
-
-  // Create Rest Token
-  let resetToken = crypto.randomBytes(32).toString("hex") + customer._id;
-
-  // Hash token before saving to db
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-
-  // /Save token to DB
-  await new Token({
-    customerId: customer.id,
-    token: hashedToken,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + 30 * (60 * 1000), //30 Minutes
-  }).save();
-
-  // Construct Reset Url
-  const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
-
-  // Reset Email
-  const message = `
-    <h2>Hello ${customer.username}</h2>
-    <p>Please use this URL below to reset your password</p>
-    <p>This reset link is valid for 30 Minutes</p>
-  
-  
-    <a href=${resetUrl} clicktraking = off> ${resetUrl}</a>
-  
-    <p>Regards .... </p>
-    `;
-  const subject = "Password reset request";
-  const send_to = customer.email;
-  const sent_from = process.env.EMAIL_USER;
-
   try {
+    let { email } = req.body;
+    console.log("Email",email);
+    
+    const customer = await Customer.findOne({ email });
+    console.log('Customer:', customer);
+    if (!customer) {
+      return res.send({ success: false, msg: "Customer not found" });
+    }
+
+    // Delete Token if it exists in DB
+    await Token.findOneAndDelete({ customerId: customer._id });
+
+    // Create Reset Token
+    let resetToken = crypto.randomBytes(32).toString("hex") + customer._id;
+
+    // Hash token before saving to db
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Save token to DB
+    await new Token({
+      customerId: customer._id, // Use _id instead of id
+      token: hashedToken,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 30 * (60 * 1000), // 30 Minutes
+    }).save();
+
+    // Construct Reset URL
+    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+
+    // Reset Email
+    const message = `
+      <h2>Hello ${customer.username}</h2>
+      <p>Please use this URL below to reset your password</p>
+      <p>This reset link is valid for 30 Minutes</p>
+    
+      <a href=${resetUrl} clicktraking = off> ${resetUrl}</a>
+    
+      <p>Regards .... </p>
+    `;
+    const subject = "Password reset request";
+    const send_to = customer.email;
+    const sent_from = process.env.EMAIL_USER;
+
     await sendEmail(subject, message, send_to, sent_from);
     res.send({ success: true, msg: "Reset Email Sent" });
   } catch (error) {
-    res.send(error);
+    console.error(error);
+    res.status(500).send({ success: false, msg: "Internal Server Error" });
   }
 };
+
 
 // Rset Customers Password
 const resetCustomerPassword = async (req, res) => {
