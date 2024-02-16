@@ -788,13 +788,15 @@ const getOrderHistorybyCustomerId = async (req, res) => {
     }
 
     const orderHistory = customer.orderHistory;
+    const orderHistoryCount = orderHistory.length;
 
-    res.send({ success: true, orderHistory: orderHistory });
+    res.send({ success: true, orderHistory: orderHistory, orderHistoryCount: orderHistoryCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 const getCustomerReportByDateRange = async (req, res) => {
   try {
