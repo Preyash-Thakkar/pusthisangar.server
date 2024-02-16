@@ -33,7 +33,10 @@ exports.createOrder = async (req, res, next) => {
     couponCode,
     transactionId,
     giftVoucher,
+    phone
   } = req.body;
+
+  console.log("Req hone",phone);
 
   try {
     products.forEach((element) => {
@@ -113,9 +116,11 @@ exports.createOrder = async (req, res, next) => {
       invoiceNumber: updatedInvoice.lattestInvoice,
       invoiceGenrationDate: new Date(),
       transactionId: transactionId,
+      phone:phone
       // giftVoucher: giftVoucher,
     });
     // T1706873792999
+    console.log("its phone",phone)
     const customerDoc = await Customer.findById(customer);
     if (customerDoc) {
       customerDoc.orderHistory.push(newOrder._id);
