@@ -13,21 +13,21 @@ const app = express();
 app.use(cookieParser());
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, "everything", { expiresIn: "1d" });
+  return jwt.sign({ id }, "everything", { expiresIn: "1h" });
 };
 
 //  Register User
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    const { name, email, password, confirmPassword ,roles, active } = req.body;
+    const { name, email, password, confirmPassword, roles, active } = req.body;
     const ProfilePhoto = req.file.path;
 
-      // Check if password and confirmPassword match
-      if (password !== confirmPassword) {
-        return res.send({ success: false, msg: "Passwords do not match" });
-      }
-  
+    // Check if password and confirmPassword match
+    if (password !== confirmPassword) {
+      return res.send({ success: false, msg: "Passwords do not match" });
+    }
+
 
     const user = await User.create({
       name: name,
@@ -39,7 +39,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
     return res.send({ success: true, msg: "User added successfully", user });
   } catch (error) {
-    return res.send({ error: error.message});
+    return res.send({ error: error.message });
   }
 });
 
@@ -50,14 +50,16 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findOne({ email });
-
+  console.log("email", email)
   if (!user) {
     return res.send({ success: false, msg: "User not found" });
   }
 
   const passwordIscorrect = await bcrypt.compare(password, user.password);
-
-  const token = generateToken(user._id);
+  const id = user._id;
+  console.log("ID",id);
+  const token = generateToken(id);
+  console.log(token);
   const roles = await Role.findOne({ role: user.roles[0] });
   res.cookie("token", token, {
     path: "/",
@@ -71,6 +73,7 @@ const loginUser = asyncHandler(async (req, res) => {
     return res.send({
       success: true,
       msg: "Successfully LoggedIn",
+      _id: user._id,
       token,
       roles: roles,
     });
@@ -95,11 +98,21 @@ const logout = asyncHandler(async (req, res) => {
 
 // Get User Data
 const getLoggedInUser = asyncHandler(async (req, res) => {
+
   let userId = req.body.id;
+  console.log("userid",req.body);
   const user = await User.findById(userId);
 
   if (user) {
-    const { _id, name, email, photo, password, roles, active } = user;
+    const {
+      _id,
+      name,
+      email,
+      photo,
+      password,
+      roles,
+      active
+    } = user;
     return res.send({
       success: true,
       _id,
@@ -119,6 +132,7 @@ const getLoggedInUser = asyncHandler(async (req, res) => {
 const getSpecificUser = asyncHandler(async (req, res) => {
   try {
     let userId = req.body.id;
+    console.log(userId);
     const user = await User.findById(userId);
     if (user) {
       const { _id, name, email, photo, roles, active } = user;
@@ -148,41 +162,84 @@ const loginStatus = asyncHandler(async (req, res) => {
   }
 
   // Verify token
-  const verified = jwt.verify(token, "everything");
-  if (verified) {
-    return res.send({ success: true });
-  } else {
-    return res.send({ success: false });
+  try {
+    // Verify token
+    const verified = jwt.verify(token, "everything");
+    if (verified) {
+      return res.send({ success: true });
+    }
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      // Token has expired
+      return res.send({ success: false, message: "Token expired" });
+    } else {
+      // Other verification errors
+      return res.send({ success: false, message: "Invalid token" });
+    }
   }
 });
 
 //  Update User
+// const updateUser = asyncHandler(async (req, res) => {
+//   if (req.body.id) {
+//     const { id, name, roles, active } = req.body;
+//     const user = await User.findById(id);
+//     const photo = req.file ? req.file.path : user.photo; // Get the path of the uploaded file
+
+//     await User.findByIdAndUpdate(id, {
+//       name: name,
+//       roles: roles,
+//       photo: photo,
+//       active: active,
+//     });
+
+
+
+//     return res.send({
+//       success: true,
+//       msg: "User updated",
+//     });
+//   } else {
+//     return res.send({
+//       success: false,
+//       msg: "User not found",
+//     });
+//   }
+// });
 const updateUser = asyncHandler(async (req, res) => {
-  if (req.body.id) {
-    const { id, name, roles, active } = req.body;
-    const user = await User.findById(id);
-    const photo = req.file ? req.file.path : user.photo; // Get the path of the uploaded file
+  try {
+    console.log("body", req.body, req.params.id);
+    const { name } = req.body;
+    const userId = req.params.id;
 
-    await User.findByIdAndUpdate(id, {
-      name: name,
-      roles: roles,
-      photo: photo,
-      active: active,
-    });
+    // Find the user in the User schema
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.send({
+        success: false,
+        msg: "User not found",
+      });
+    }
 
-    
+    // Update the relevant fields in the User schema
+    user.name = name;
+    user.photo = req.file ? req.file.path : user.photo;
+    user.active = req.body.active;
+
+    await user.save();
 
     return res.send({
       success: true,
       msg: "User updated",
     });
-  } else {
-    return res.send({
-      success: false,
-      msg: "User not found",
-    });
+  } catch (error) {
+    console.error("Error during update:", error);
+    return res
+      .status(500)
+      .json({ success: false, msg: "Internal Server Error" });
   }
 });
+
 
 // Update Password
 const updatePassword = asyncHandler(async (req, res) => {

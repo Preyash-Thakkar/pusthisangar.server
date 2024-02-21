@@ -10,7 +10,7 @@ app.use(cookieParser());
 const protect = asyncHandler(async (req, res, next) => {
   try {
     const token = req.body.token;
-   
+    // console.log({token:token})
     if (!token) {
       return res.send({success : false , Error : "Not authorized, please login"});
     }
