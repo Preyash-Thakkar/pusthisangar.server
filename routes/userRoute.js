@@ -11,7 +11,7 @@ router.use(cookieParser());
 router.post("/register" , upload.single('photo'), registerUser);
 router.post("/login" , loginUser);
 router.post("/logout" , logout);
-router.post("/getloggedinuser",protect, getLoggedInUser);
+router.post("/getloggedinuser",protect,getLoggedInUser);
 router.post("/getspecificuser", getSpecificUser);
 router.post("/loggedin", loginStatus);
 router.post("/updateuser" , upload.single('photo') ,updateUser);
