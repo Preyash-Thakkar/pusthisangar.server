@@ -161,7 +161,7 @@ const getSpecificCustomer = async (req, res) => {
 // Get LoggedIn Status
 const loginStatus = async (req, res) => {
   const token = req.body.token;
-  
+
   if (!token) {
     return res.send({ success: false });
   }
@@ -179,7 +179,7 @@ const loginStatus = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     const CustomerId = req.params.id;
-  
+
     const { username } = req.body;
 
     const updateData = await Customer.findByIdAndUpdate(CustomerId, {
@@ -253,10 +253,10 @@ const updateCustomerPassword = async (req, res) => {
 const forgotCustomerPassword = async (req, res) => {
   try {
     let { email } = req.body;
-    console.log("Email",email);
-    
+    console.log("Email", email);
+
     const customer = await Customer.findOne({ email });
-    console.log('Customer:', customer);
+    console.log("Customer:", customer);
     if (!customer) {
       return res.send({ success: false, msg: "Customer not found" });
     }
@@ -305,7 +305,6 @@ const forgotCustomerPassword = async (req, res) => {
     res.status(500).send({ success: false, msg: "Internal Server Error" });
   }
 };
-
 
 // Rset Customers Password
 const resetCustomerPassword = async (req, res) => {
@@ -505,8 +504,20 @@ const getLoggedInCustomerCartItems = async (req, res) => {
 };
 // Remove a product from the customer's cart
 const removeFromCart = async (req, res) => {
+  console.log("Request body:", req.body);
   const customerId = req.params.id; // Customer ID
-  const { productId } = req.body; // Product ID
+  const { ProductId } = req.body; // Product ID
+
+  console.log("customer", customerId);
+  console.log("product", ProductId);
+
+  // Check if productId is undefined
+  if (!ProductId) {
+    return res.status(400).json({
+      success: false,
+      msg: "Product ID is missing in the request body",
+    });
+  }
 
   try {
     // Find the customer by ID
@@ -521,7 +532,7 @@ const removeFromCart = async (req, res) => {
 
     // Check if the product exists in the cart
     const cartItemIndex = customer.cartItems.findIndex(
-      (item) => item.product.toString() === productId
+      (item) => item.product.toString() === ProductId
     );
 
     // if (cartItemIndex === -1) {
@@ -790,13 +801,16 @@ const getOrderHistorybyCustomerId = async (req, res) => {
     const orderHistory = customer.orderHistory;
     const orderHistoryCount = orderHistory.length;
 
-    res.send({ success: true, orderHistory: orderHistory, orderHistoryCount: orderHistoryCount });
+    res.send({
+      success: true,
+      orderHistory: orderHistory,
+      orderHistoryCount: orderHistoryCount,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 const getCustomerReportByDateRange = async (req, res) => {
   try {
@@ -806,12 +820,10 @@ const getCustomerReportByDateRange = async (req, res) => {
     const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
 
     if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          msg: "Please provide valid date range in the 'DD/MM/YYYY' format.",
-        });
+      return res.status(400).json({
+        success: false,
+        msg: "Please provide valid date range in the 'DD/MM/YYYY' format.",
+      });
     }
 
     const [, startMonth, startDay, startYear] = startDate.match(datePattern);
@@ -837,9 +849,6 @@ const getCustomerReportByDateRange = async (req, res) => {
   }
 };
 
-
-
-
 module.exports = {
   registerCustomer,
   loginCustomer,
@@ -862,5 +871,5 @@ module.exports = {
   getLoggedInCustomerWishlistItems,
   removeFromWishlist,
   getOrderHistorybyCustomerId,
-  getCustomerReportByDateRange
+  getCustomerReportByDateRange,
 };
