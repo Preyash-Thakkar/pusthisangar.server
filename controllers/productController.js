@@ -53,9 +53,7 @@ const addProduct = async (req, res, next) => {
   //   });
   // }
 
-  console.log("All products",productColor,
-    productSize,
-    OtherVariations,)
+  console.log("All products", productColor, productSize, OtherVariations);
 
   const imageGallery = imageGalleryFiles.map((file) => file.filename);
 
@@ -99,9 +97,9 @@ const addProduct = async (req, res, next) => {
     color: color,
     material: material,
     season: season,
-    productColor:productColor,
-    productSize:productSize,
-    OtherVariations:OtherVariations,
+    productColor: productColor,
+    productSize: productSize,
+    OtherVariations: OtherVariations,
   };
 
   try {
@@ -206,7 +204,7 @@ const addVarProduct = async (req, res, next) => {
     isVariant: true,
     productColor: productColor,
     productSize: productSize,
-    OtherVariations:OtherVariations
+    OtherVariations: OtherVariations,
   };
 
   try {
@@ -533,12 +531,54 @@ const getProductsByCategoryAndPriceRange = async (req, res, next) => {
             priceQuery,
           ],
         },
+
+        // $project: {
+        //   name: 1,
+        //   description: 1,
+        //   productStock: 1,
+        //   category: 1,
+        //   subCategory: 1,
+        //   subSubCategory: 1,
+        //   tags: 1,
+        //   prices: 1,
+        //   imageGallery: 1,
+        //   stock: 1,
+        //   hsnCode: 1,
+        //   size: 1,
+        //   shippingCharge: 1,
+        //   material: 1,
+        //   color: 1,
+        //   season: 1,
+        //   gst: 1,
+        //   sku: 1,
+        //   calculationOnWeight: 1,
+        //   weightType: 1,
+        //   weight: 1,
+        //   laborCost: 1,
+        //   discountOnLaborCost: 1,
+        //   isActive: 1,
+        //   isProductPopular: 1,
+        //   isProductNew: 1,
+        //   createdAt: 1,
+        //   filters: 1,
+        //   productColor: 1,
+        //   productSize: 1,
+        //   OtherVariations: 1,
+        // },
+      },
+      {
+        $lookup: {
+          from: "stocks",
+          localField: "_id",
+          foreignField: "ProductId",
+          as: "productStock",
+        },
       },
       // ... (other existing stages)
     ];
 
     // Perform aggregation
-    const products = await Product.aggregate(newStages);
+    const products = await Product.aggregate(newStages).exec();
 
     // Count of products
     const productCount = products.length;
@@ -813,17 +853,22 @@ const updateProduct = async (req, res) => {
     // Fetch the product to update
     const productToUpdate = await Product.findById(Id);
     if (!productToUpdate) {
-      return res.status(404).send({ success: false, error: "Product not found" });
+      return res
+        .status(404)
+        .send({ success: false, error: "Product not found" });
     }
 
     // Process OtherVariations: Convert 'Empty' to an empty array or use as is
-    let processedOtherVariations = OtherVariations === 'Empty' ? [] : OtherVariations;
+    let processedOtherVariations =
+      OtherVariations === "Empty" ? [] : OtherVariations;
 
     // Prepare the update object, including logic for recalculating price if necessary
     let calculatedPrice = original; // Default to the provided original price
     if (calculationOnWeight === "true") {
       const priceUpdate = await PriceUpdate.findById(weightType);
-      calculatedPrice = priceUpdate ? (priceUpdate.price * weight + weight * discountOnLaborCost) : original;
+      calculatedPrice = priceUpdate
+        ? priceUpdate.price * weight + weight * discountOnLaborCost
+        : original;
     }
 
     // Prepare product data for update, including handling of image gallery and other fields
@@ -864,8 +909,11 @@ const updateProduct = async (req, res) => {
 
     // Handle image gallery updates
     if (imageGalleryFiles && imageGalleryFiles.length > 0) {
-      const imageFilenames = imageGalleryFiles.map(file => file.filename);
-      updateData.imageGallery = [...productToUpdate.imageGallery, ...imageFilenames];
+      const imageFilenames = imageGalleryFiles.map((file) => file.filename);
+      updateData.imageGallery = [
+        ...productToUpdate.imageGallery,
+        ...imageFilenames,
+      ];
     }
 
     // Update the product in the database
@@ -884,7 +932,6 @@ const updateProduct = async (req, res) => {
     res.status(500).send({ success: false, error: "Internal Server Error" });
   }
 };
-
 
 // Delete Product
 const deleteProduct = async (req, res) => {
