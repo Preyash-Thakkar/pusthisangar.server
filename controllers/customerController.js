@@ -178,28 +178,37 @@ const loginStatus = async (req, res) => {
 // Update Customer
 const updateCustomer = async (req, res) => {
   try {
-    const CustomerId = req.params.id;
+    const customerId = req.params.id;
+    console.log("id", customerId);
 
-    const { username } = req.body;
+    const { customerInfo } = req.body;
+    console.log("customerInfo", customerInfo);
 
-    const updateData = await Customer.findByIdAndUpdate(CustomerId, {
-      username: username,
-    });
+    const updateData = await Customer.findByIdAndUpdate(
+      customerId,
+      {
+        username: customerInfo, // Assuming 'customerInfo' contains the new username
+      },
+      { new: true }
+    );
+
+    console.log("data", updateData);
 
     if (!updateData) {
-      return res.send({
+      return res.status(404).send({
         success: false,
         message: "Customer not found",
       });
     }
 
-    return res.send({
+    return res.status(200).send({
       success: true,
       message: "Customer updated successfully",
       customer: updateData,
     });
   } catch (error) {
-    return res.send({ error: error.message });
+    console.error("Error:", error);
+    return res.status(500).send({ error: error.message });
   }
 };
 
